@@ -1,0 +1,4 @@
+﻿Name           ResourceGroup     Location
+-------------  ----------------  ----------
+vm-backend01   rg-networking-tf  westeurope
+vm-frontend01  rg-networking-tf  westeurope

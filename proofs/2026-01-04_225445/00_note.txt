@@ -1,0 +1,1 @@
+﻿Stopped due to Azure CLI login/MFA issue (AADSTS50076). Next: fix az login with --tenant, then terraform plan/apply.
