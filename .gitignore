@@ -23,7 +23,8 @@ terraform.tfstate.backup
 *.auto.tfvars
 !terraform.tfvars.example
 
-# local transcripts/logs (never commit)
+# local proof runs (do not commit)
 proofs/
+
 
 
