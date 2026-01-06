@@ -11,14 +11,19 @@ terraform.tfvars
 .vscode/
 *.exe
 
-# SSH keys (never commit private keys)
-azure_key
-azure_key.pub
-
-# local logs/transcripts (optional)
-proofs/**/00_transcript.log
-
 # SSH keys (never commit)
 azure_key
 azure_key.pub
+
+# terraform local stuff
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+*.tfvars
+*.auto.tfvars
+!terraform.tfvars.example
+
+# local transcripts/logs (never commit)
+proofs/
+
 
