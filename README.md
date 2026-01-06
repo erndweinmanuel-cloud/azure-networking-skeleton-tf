@@ -1,59 +1,61 @@
 # azure-networking-skeleton-tf (v1)
 
-Two-tier Azure networking lab built with Terraform.
+Two-tier Azure networking lab built with Terraform (AzureRM).
 
 ## What it deploys
 
 - Resource Group
-- VNet 10.0.0.0/16
-- Subnets: frontend (10.0.1.0/24), backend (10.0.2.0/24), AzureBastionSubnet (optional)
-- VM frontend with Public IP
-- VM backend without Public IP
-- NSG backend:
-  - Allow TCP 8080 from frontend subnet
-  - Deny all other inbound traffic from VirtualNetwork to backend
-- NSG frontend:
-  - Allow SSH (22) only from my public IP (/32)
+- VNet `10.0.0.0/16`
+- Subnets:
+  - `frontend` (`10.0.1.0/24`)
+  - `backend` (`10.0.2.0/24`)
+  - `AzureBastionSubnet` (optional)
+- VM `frontend` with Public IP
+- VM `backend` without Public IP
+- NSG `backend`
+  - Allow TCP 8080 from `frontend` subnet
+  - Deny all other inbound traffic from `VirtualNetwork` to backend
+- NSG `frontend`
+  - Allow SSH (22) only from **your** public IP (`/32`)
 
-## Files to create
+## Proof / Evidence
 
-Create this file in the repo root: `terraform.tfvars.example`
+See the curated proof run (plan → apply → outputs → destroy): **[proofs.md](proofs.md)**
 
-Content:
-```hcl
-my_public_ip_cidr = "YOUR_PUBLIC_IP/32"
-```
+## Prereqs
 
-## How to run
+- Azure CLI
+- Terraform
+- Azure subscription permissions to create networking + compute resources
 
-1) Create `terraform.tfvars` from the example and set your own public IP (/32)
+## Configuration
+
+Create a local `terraform.tfvars` (never commit it):
+
 ```powershell
 copy terraform.tfvars.example terraform.tfvars
 notepad terraform.tfvars
-``` 
-
-Example content inside `terraform.tfvars`:
-```hcl
-my_public_ip_cidr = "83.135.179.151/32"
 ```
 
-2) Login + init + plan + apply
+Example
+```hcl
+my_public_ip_cidr = "YOUR_PUBLIC_IP/32"
+``` 
+Tip: your public IP may change. Update terraform.tfvars and re-apply.
+
+Run
 ```powershell
-az login --tenant 58bbca4b-2a3b-4da1-87f2-92bd05ee8968 --use-device-code
+az login --use-device-code
 terraform init
 terraform fmt
 terraform validate
 terraform plan
 terraform apply
-```
+``` 
 
-3) Destroy (to avoid costs)
+Destroy (avoid costs)
 ```powershell
 terraform destroy
 ``` 
 
-Note: Your public IP may change. If SSH stops working, update `terraform.tfvars` and run:
-```powershell
-terraform apply
-```
 
