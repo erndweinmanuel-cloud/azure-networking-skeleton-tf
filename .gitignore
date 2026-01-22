@@ -24,7 +24,7 @@ terraform.tfstate.backup
 !terraform.tfvars.example
 
 # local proof runs (do not commit)
-proofs/
+
 
 
 
