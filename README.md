@@ -119,23 +119,23 @@ Tip: In GitHub you can click the links. Images render inline.
 
 ## Screenshots (inline)
 
-00 — terraform validate
-![](proofs/cli/00_terraform_validate.png)
+**00 — terraform validate**
+<br><img src="proofs/cli/00_terraform_validate.png" width="900">
 
-01 — terraform output (public IP + RG + vnet id)
-![](proofs/cli/01_terraform_output_all.png)
+**01 — terraform output (public IP + RG + vnet id)**
+<br><img src="proofs/cli/01_terraform_output_all.png" width="900">
 
-02 — terraform output (private IPs)
-![](proofs/cli/02_terraform_output_private_ips.png)
+**02 — terraform output (private IPs)**
+<br><img src="proofs/cli/02_terraform_output_private_ips.png" width="900">
 
-03 — backend start HTTP listener (8080)
-![](proofs/cli/03_backend_start_http8080.png)
+**03 — backend start HTTP listener (8080)**
+<br><img src="proofs/cli/03_backend_start_http8080.png" width="900">
 
-04 — backend listens on 0.0.0.0:8080
-![](proofs/cli/04_backend_listen_8080.png)
+**04 — backend listens on 0.0.0.0:8080**
+<br><img src="proofs/cli/04_backend_listen_8080.png" width="900">
 
-05 — frontend → backend curl (HTTP 200 OK)
-![](proofs/cli/05_frontend_to_backend_curl_8080.png)
+**05 — frontend → backend curl (HTTP 200 OK)**
+<br><img src="proofs/cli/05_frontend_to_backend_curl_8080.png" width="900">
 
 ---
 
