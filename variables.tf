@@ -13,8 +13,5 @@ variable "vnet_name" {
   default = "vnet-main"
 }
 
-variable "my_public_ip_cidr" {
-  type        = string
-  description = "Your public IP in CIDR, e.g. 83.135.179.151/32"
-}
+
 

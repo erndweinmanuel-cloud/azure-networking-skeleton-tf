@@ -1,11 +1,3 @@
-resource "azurerm_public_ip" "pip_front" {
-  name                = "pip-frontend"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
-  allocation_method   = "Static"
-  sku                 = "Standard"
-}
-
 resource "azurerm_network_interface" "nic_front" {
   name                = "nic-frontend"
   location            = azurerm_resource_group.rg.location
@@ -15,7 +7,6 @@ resource "azurerm_network_interface" "nic_front" {
     name                          = "ipconfig-frontend"
     subnet_id                     = azurerm_subnet.frontend.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.pip_front.id
   }
 }
 
