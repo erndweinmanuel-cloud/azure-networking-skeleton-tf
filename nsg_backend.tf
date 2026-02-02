@@ -5,15 +5,15 @@ resource "azurerm_network_security_group" "nsg_backend" {
 }
 
 resource "azurerm_network_security_rule" "allow_8080_web_to_db_asg" {
-  name                   = "allow-app-web-to-db"
-  priority               = 100
-  direction              = "Inbound"
-  access                 = "Allow"
-  protocol               = "Tcp"
+  name      = "allow-app-web-to-db"
+  priority  = 110
+  direction = "Inbound"
+  access    = "Allow"
+  protocol  = "Tcp"
+
   source_port_range      = "*"
   destination_port_range = "8080"
 
-  # ASG statt Subnet/IP Prefix
   source_application_security_group_ids      = [azurerm_application_security_group.asg_web.id]
   destination_application_security_group_ids = [azurerm_application_security_group.asg_db.id]
 
@@ -21,16 +21,52 @@ resource "azurerm_network_security_rule" "allow_8080_web_to_db_asg" {
   network_security_group_name = azurerm_network_security_group.nsg_backend.name
 }
 
-# Blockt: alles andere aus dem VNet ins Backend (überschreibt Default "AllowVnetInBound")
-resource "azurerm_network_security_rule" "deny_all_vnet_inbound" {
-  name                        = "deny-vnet-inbound-all"
+# Bastion intern erlauben über SSH
+resource "azurerm_network_security_rule" "allow_ssh_to_backend_from_bastion" {
+  name                   = "allow-ssh-to-backend-from-bastion"
+  priority               = 100
+  direction              = "Inbound"
+  access                 = "Allow"
+  protocol               = "Tcp"
+  source_port_range      = "*"
+  destination_port_range = "22"
+
+  source_address_prefix                      = azurerm_subnet.bastion.address_prefixes[0]
+  destination_application_security_group_ids = [azurerm_application_security_group.asg_db.id]
+  destination_address_prefix                 = "*"
+
+  resource_group_name         = azurerm_resource_group.rg.name
+  network_security_group_name = azurerm_network_security_group.nsg_backend.name
+}
+
+
+
+
+# Explizit blocken: SSH
+resource "azurerm_network_security_rule" "deny_ssh_inbound_backend" {
+  name                        = "deny-ssh-inbound"
   priority                    = 200
   direction                   = "Inbound"
   access                      = "Deny"
-  protocol                    = "*"
+  protocol                    = "Tcp"
   source_port_range           = "*"
-  destination_port_range      = "*"
-  source_address_prefix       = "VirtualNetwork"
+  destination_port_range      = "22"
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.rg.name
+  network_security_group_name = azurerm_network_security_group.nsg_backend.name
+}
+
+# Explizit blocken: RDP
+resource "azurerm_network_security_rule" "deny_rdp_inbound_backend" {
+  name                        = "deny-rdp-inbound"
+  priority                    = 210
+  direction                   = "Inbound"
+  access                      = "Deny"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "3389"
+  source_address_prefix       = "*"
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.rg.name
   network_security_group_name = azurerm_network_security_group.nsg_backend.name
