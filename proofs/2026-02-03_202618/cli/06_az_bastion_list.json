@@ -1,0 +1,36 @@
+﻿The command requires the extension bastion. Do you want to install it now? The command will continue to run after the extension is installed. (Y/n): [
+  {
+    "dnsName": "bst-96038116-808d-4d7e-a286-8300e00ef5d1.bastion.azure.com",
+    "etag": "W/\"686e0360-2263-456a-96b7-652273d26bba\"",
+    "id": "/subscriptions/a51a94c7-ee9c-48b6-8880-e0c4c1452650/resourceGroups/rg-networking-tf/providers/Microsoft.Network/bastionHosts/bas-main",
+    "ipConfigurations": [
+      {
+        "etag": "W/\"686e0360-2263-456a-96b7-652273d26bba\"",
+        "id": "/subscriptions/a51a94c7-ee9c-48b6-8880-e0c4c1452650/resourceGroups/rg-networking-tf/providers/Microsoft.Network/bastionHosts/bas-main/bastionHostIpConfigurations/bas-ipcfg",
+        "name": "bas-ipcfg",
+        "privateIPAllocationMethod": "Dynamic",
+        "provisioningState": "Succeeded",
+        "publicIPAddress": {
+          "id": "/subscriptions/a51a94c7-ee9c-48b6-8880-e0c4c1452650/resourceGroups/rg-networking-tf/providers/Microsoft.Network/publicIPAddresses/pip-bastion",
+          "resourceGroup": "rg-networking-tf"
+        },
+        "resourceGroup": "rg-networking-tf",
+        "subnet": {
+          "id": "/subscriptions/a51a94c7-ee9c-48b6-8880-e0c4c1452650/resourceGroups/rg-networking-tf/providers/Microsoft.Network/virtualNetworks/vnet-main/subnets/AzureBastionSubnet",
+          "resourceGroup": "rg-networking-tf"
+        },
+        "type": "Microsoft.Network/bastionHosts/bastionHostIpConfigurations"
+      }
+    ],
+    "location": "westeurope",
+    "name": "bas-main",
+    "provisioningState": "Succeeded",
+    "resourceGroup": "rg-networking-tf",
+    "scaleUnits": 2,
+    "sku": {
+      "name": "Standard"
+    },
+    "tags": {},
+    "type": "Microsoft.Network/bastionHosts"
+  }
+]

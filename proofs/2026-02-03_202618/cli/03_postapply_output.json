@@ -1,0 +1,27 @@
+﻿{
+  "backend_private_ip": {
+    "sensitive": false,
+    "type": "string",
+    "value": "10.0.2.4"
+  },
+  "bastion_public_ip": {
+    "sensitive": false,
+    "type": "string",
+    "value": "51.124.153.172"
+  },
+  "frontend_private_ip": {
+    "sensitive": false,
+    "type": "string",
+    "value": "10.0.1.4"
+  },
+  "rg_name": {
+    "sensitive": false,
+    "type": "string",
+    "value": "rg-networking-tf"
+  },
+  "vnet_id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "/subscriptions/a51a94c7-ee9c-48b6-8880-e0c4c1452650/resourceGroups/rg-networking-tf/providers/Microsoft.Network/virtualNetworks/vnet-main"
+  }
+}
