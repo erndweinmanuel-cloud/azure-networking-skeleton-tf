@@ -1,0 +1,116 @@
+﻿[
+  {
+    "auxiliaryMode": "None",
+    "auxiliarySku": "None",
+    "disableTcpStateTracking": false,
+    "dnsSettings": {
+      "appliedDnsServers": [],
+      "dnsServers": [],
+      "internalDomainNameSuffix": "4m4e4ir52eyuzahaz5zyp3trwa.ax.internal.cloudapp.net"
+    },
+    "enableAcceleratedNetworking": false,
+    "enableIPForwarding": false,
+    "etag": "W/\"441214d6-3cf1-43f1-a48a-c8af53d4859d\"",
+    "hostedWorkloads": [],
+    "id": "/subscriptions/a51a94c7-ee9c-48b6-8880-e0c4c1452650/resourceGroups/rg-networking-tf/providers/Microsoft.Network/networkInterfaces/nic-backend",
+    "ipConfigurations": [
+      {
+        "applicationSecurityGroups": [
+          {
+            "id": "/subscriptions/a51a94c7-ee9c-48b6-8880-e0c4c1452650/resourceGroups/rg-networking-tf/providers/Microsoft.Network/applicationSecurityGroups/asg-db",
+            "resourceGroup": "rg-networking-tf"
+          }
+        ],
+        "etag": "W/\"441214d6-3cf1-43f1-a48a-c8af53d4859d\"",
+        "id": "/subscriptions/a51a94c7-ee9c-48b6-8880-e0c4c1452650/resourceGroups/rg-networking-tf/providers/Microsoft.Network/networkInterfaces/nic-backend/ipConfigurations/ipconfig-backend",
+        "name": "ipconfig-backend",
+        "primary": true,
+        "privateIPAddress": "10.0.2.4",
+        "privateIPAddressVersion": "IPv4",
+        "privateIPAllocationMethod": "Dynamic",
+        "provisioningState": "Succeeded",
+        "resourceGroup": "rg-networking-tf",
+        "subnet": {
+          "id": "/subscriptions/a51a94c7-ee9c-48b6-8880-e0c4c1452650/resourceGroups/rg-networking-tf/providers/Microsoft.Network/virtualNetworks/vnet-main/subnets/subnet-backend",
+          "resourceGroup": "rg-networking-tf"
+        },
+        "type": "Microsoft.Network/networkInterfaces/ipConfigurations"
+      }
+    ],
+    "location": "westeurope",
+    "macAddress": "00-0D-3A-AD-2B-D4",
+    "name": "nic-backend",
+    "nicType": "Standard",
+    "primary": true,
+    "provisioningState": "Succeeded",
+    "resourceGroup": "rg-networking-tf",
+    "resourceGuid": "c5b437db-4f75-43a5-b3b6-968210d1d402",
+    "tags": {},
+    "tapConfigurations": [],
+    "type": "Microsoft.Network/networkInterfaces",
+    "virtualMachine": {
+      "id": "/subscriptions/a51a94c7-ee9c-48b6-8880-e0c4c1452650/resourceGroups/rg-networking-tf/providers/Microsoft.Compute/virtualMachines/vm-backend01",
+      "resourceGroup": "rg-networking-tf"
+    },
+    "vnetEncryptionSupported": false
+  },
+  {
+    "auxiliaryMode": "None",
+    "auxiliarySku": "None",
+    "disableTcpStateTracking": false,
+    "dnsSettings": {
+      "appliedDnsServers": [],
+      "dnsServers": [],
+      "internalDomainNameSuffix": "4m4e4ir52eyuzahaz5zyp3trwa.ax.internal.cloudapp.net"
+    },
+    "enableAcceleratedNetworking": false,
+    "enableIPForwarding": false,
+    "etag": "W/\"9cc7205c-ee89-4f1d-af29-ca568c2269d2\"",
+    "hostedWorkloads": [],
+    "id": "/subscriptions/a51a94c7-ee9c-48b6-8880-e0c4c1452650/resourceGroups/rg-networking-tf/providers/Microsoft.Network/networkInterfaces/nic-frontend",
+    "ipConfigurations": [
+      {
+        "applicationSecurityGroups": [
+          {
+            "id": "/subscriptions/a51a94c7-ee9c-48b6-8880-e0c4c1452650/resourceGroups/rg-networking-tf/providers/Microsoft.Network/applicationSecurityGroups/asg-web",
+            "resourceGroup": "rg-networking-tf"
+          }
+        ],
+        "etag": "W/\"9cc7205c-ee89-4f1d-af29-ca568c2269d2\"",
+        "id": "/subscriptions/a51a94c7-ee9c-48b6-8880-e0c4c1452650/resourceGroups/rg-networking-tf/providers/Microsoft.Network/networkInterfaces/nic-frontend/ipConfigurations/ipconfig-frontend",
+        "name": "ipconfig-frontend",
+        "primary": true,
+        "privateIPAddress": "10.0.1.4",
+        "privateIPAddressVersion": "IPv4",
+        "privateIPAllocationMethod": "Dynamic",
+        "provisioningState": "Succeeded",
+        "resourceGroup": "rg-networking-tf",
+        "subnet": {
+          "id": "/subscriptions/a51a94c7-ee9c-48b6-8880-e0c4c1452650/resourceGroups/rg-networking-tf/providers/Microsoft.Network/virtualNetworks/vnet-main/subnets/subnet-frontend",
+          "resourceGroup": "rg-networking-tf"
+        },
+        "type": "Microsoft.Network/networkInterfaces/ipConfigurations"
+      }
+    ],
+    "location": "westeurope",
+    "macAddress": "00-0D-3A-29-8E-26",
+    "name": "nic-frontend",
+    "networkSecurityGroup": {
+      "id": "/subscriptions/a51a94c7-ee9c-48b6-8880-e0c4c1452650/resourceGroups/rg-networking-tf/providers/Microsoft.Network/networkSecurityGroups/nsg-frontend",
+      "resourceGroup": "rg-networking-tf"
+    },
+    "nicType": "Standard",
+    "primary": true,
+    "provisioningState": "Succeeded",
+    "resourceGroup": "rg-networking-tf",
+    "resourceGuid": "eff1130c-d9a2-46b2-865a-0b33a2559485",
+    "tags": {},
+    "tapConfigurations": [],
+    "type": "Microsoft.Network/networkInterfaces",
+    "virtualMachine": {
+      "id": "/subscriptions/a51a94c7-ee9c-48b6-8880-e0c4c1452650/resourceGroups/rg-networking-tf/providers/Microsoft.Compute/virtualMachines/vm-frontend01",
+      "resourceGroup": "rg-networking-tf"
+    },
+    "vnetEncryptionSupported": false
+  }
+]

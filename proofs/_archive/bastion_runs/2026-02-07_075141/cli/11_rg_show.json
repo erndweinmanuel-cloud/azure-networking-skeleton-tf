@@ -1,0 +1,11 @@
+﻿{
+  "id": "/subscriptions/a51a94c7-ee9c-48b6-8880-e0c4c1452650/resourceGroups/rg-networking-tf",
+  "location": "westeurope",
+  "managedBy": null,
+  "name": "rg-networking-tf",
+  "properties": {
+    "provisioningState": "Succeeded"
+  },
+  "tags": {},
+  "type": "Microsoft.Resources/resourceGroups"
+}

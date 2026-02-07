@@ -1,0 +1,14 @@
+﻿azurerm_application_security_group.asg_db
+azurerm_bastion_host.bastion
+azurerm_linux_virtual_machine.vm_back
+azurerm_linux_virtual_machine.vm_front
+azurerm_network_interface.nic_back
+azurerm_network_interface.nic_front
+azurerm_network_security_group.nsg_backend
+azurerm_network_security_group.nsg_frontend
+azurerm_public_ip.pip_bastion
+azurerm_resource_group.rg
+azurerm_subnet.backend
+azurerm_subnet.bastion
+azurerm_subnet.frontend
+azurerm_virtual_network.vnet

@@ -1,0 +1,6 @@
+﻿Terraform v1.14.2
+on windows_amd64
++ provider registry.terraform.io/hashicorp/azurerm v4.57.0
+
+Your version of Terraform is out of date! The latest version
+is 1.14.4. You can update by downloading from https://developer.hashicorp.com/terraform/install

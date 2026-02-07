@@ -1,0 +1,29 @@
+﻿[
+  {
+    "ddosSettings": {
+      "protectionMode": "VirtualNetworkInherited"
+    },
+    "etag": "W/\"5d4e5014-3474-4ce9-9287-56d062a3d1d9\"",
+    "id": "/subscriptions/a51a94c7-ee9c-48b6-8880-e0c4c1452650/resourceGroups/rg-networking-tf/providers/Microsoft.Network/publicIPAddresses/pip-bastion",
+    "idleTimeoutInMinutes": 4,
+    "ipAddress": "20.71.198.69",
+    "ipConfiguration": {
+      "id": "/subscriptions/a51a94c7-ee9c-48b6-8880-e0c4c1452650/resourceGroups/rg-networking-tf/providers/Microsoft.Network/bastionHosts/bas-main/bastionHostIpConfigurations/bas-ipcfg",
+      "resourceGroup": "rg-networking-tf"
+    },
+    "ipTags": [],
+    "location": "westeurope",
+    "name": "pip-bastion",
+    "provisioningState": "Succeeded",
+    "publicIPAddressVersion": "IPv4",
+    "publicIPAllocationMethod": "Static",
+    "resourceGroup": "rg-networking-tf",
+    "resourceGuid": "bd21f307-bbf5-4c6d-b70f-a76b22d112de",
+    "sku": {
+      "name": "Standard",
+      "tier": "Regional"
+    },
+    "tags": {},
+    "type": "Microsoft.Network/publicIPAddresses"
+  }
+]
