@@ -1,31 +1,35 @@
-# Terraform local stuff
+# Terraform
 .terraform/
 *.tfstate
 *.tfstate.*
 crash.log
 crash.*.log
+
+# tfvars (never commit)
 terraform.tfvars
 *.auto.tfvars
-*.tfvars
-!.terraform.tfvars.example
+*.auto.tfvars.json
 
-# SSH keys (never commit)
-azure_key
-azure_key.pub
+# Plans / outputs
+tfplan
+tfplan.*
+*.plan
+*.out
 
-# VS Code
+# SSH keys / certs
+*.pem
+*.ppk
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+*.key
+
+# Local tooling
 .vscode/
+.DS_Store
+Thumbs.db
 
-# Local proof runs (raw logs may contain IDs) - never commit
-proofs/[0-9][0-9][0-9][0-9]-*/
-proofs/20*/
-proofs/_archive/
-redaction_audit_report*.txt
-
-# Allow public docs proofs
-!proofs/docs-proofs/
-!proofs/docs-proofs/**
-
-# Keep folder structure if needed
-!.gitkeep
-
+# Proofs: keep only curated outputs you explicitly want
+# (optional) uncomment if you want to never commit raw proof dumps
+# proofs/**/raw/
