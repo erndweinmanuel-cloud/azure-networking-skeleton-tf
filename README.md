@@ -1,82 +1,121 @@
 # azure-networking-skeleton-tf
-**Azure Networking Security Baseline (Terraform)** — 2-tier VNet + private Linux VMs + **Azure Bastion (Standard)**, hardened **NSGs + ASGs**, and an **audit-ready proof pipeline** (curated screenshots + redacted CLI/Terraform outputs).
 
-This repo is built to be:
-- **Secure by default** (no VM Public IPs, Bastion access, NSG hardening)
-- **Reproducible** (clean Terraform workflow: init → fmt → validate → plan → apply → destroy)
-- **Recruiter-friendly** (proofs are curated + redacted; no raw dumps, no secrets)
+**Azure Networking Security Baseline (Terraform)**  
+A production-style Azure networking setup with **private Linux VMs**, **Azure Bastion (Standard)**, and **hardened NSGs + ASGs** — designed to demonstrate **secure-by-default architecture**, clean Terraform workflows, and security-aware proof handling.
+
+This repository intentionally focuses on **architecture, security posture, and reproducibility** rather than publishing raw infrastructure logs.
+
+---
+
+## Why this repo exists
+
+This project demonstrates how to build a **secure Azure network baseline** that reflects real-world best practices:
+
+- No public exposure of workloads
+- Controlled administrative access via Azure Bastion
+- Clear separation of tiers (frontend / backend)
+- Least-privilege network rules
+- Clean Terraform lifecycle (deploy → verify → destroy)
+- Proofs that are **curated and security-safe**
+
+It is built as a **portfolio-grade reference**, not a lab dump.
+
+---
+
+## Key characteristics
+
+- **Secure by default**
+  - No VM Public IPs
+  - No inbound SSH/RDP from the internet
+  - Bastion-based access only
+- **Reproducible**
+  - Deterministic Terraform workflow
+  - Clear separation of concerns in code structure
+- **Recruiter-friendly**
+  - Curated evidence instead of raw dumps
+  - No secrets, no state files, no leaked identifiers
 
 ---
 
 ## What this deploys
-- A **Virtual Network** with **frontend** + **backend** subnets
-- **Azure Bastion Standard** (in `AzureBastionSubnet`)
-- Two **Linux VMs** (frontend + backend) **without Public IPs**
-- **NSGs** to enforce least privilege traffic
-- **ASGs** to group workloads and keep NSG rules clean
+
+- **Virtual Network**
+  - Dedicated frontend and backend subnets
+- **Azure Bastion Standard**
+  - Deployed into `AzureBastionSubnet`
+- **Two Linux VMs**
+  - Frontend VM
+  - Backend VM
+  - Both without Public IPs
+- **Network Security Groups (NSGs)**
+  - Enforcing least-privilege traffic between tiers
+- **Application Security Groups (ASGs)**
+  - Logical grouping of workloads for clean NSG rules
 
 ---
 
-## Repo layout (based on the current TF files)
-Terraform is intentionally split by concern:
+## Repository layout
 
-- `providers.tf` — AzureRM provider config
+### Terraform code
+- `providers.tf` — AzureRM provider configuration
 - `variables.tf` — input variables
-- `terraform.tfvars.example` — example vars (copy locally; never commit real `terraform.tfvars`)
-- `main.tf` — core wiring / base resources
-- `compute.tf` — Linux VMs (no public IPs)
-- `bastion.tf` — Bastion Standard configuration
+- `terraform.tfvars.example` — example variables (never commit real values)
+- `main.tf` — core wiring and base resources
+- `compute.tf` — Linux VMs (private only)
+- `bastion.tf` — Azure Bastion Standard
 - `asg.tf` — Application Security Groups
 - `nsg_frontend.tf` — frontend NSG rules
 - `nsg_backend.tf` — backend NSG rules
-- `outputs.tf` — outputs used for validation + proofs
+- `outputs.tf` — outputs used for validation
 
-Proof + tooling:
-- `tools/redact.ps1` — redaction pipeline (raw → audit-safe)
-- `proofs/` — **only** curated + redacted artifacts are allowed in Git
-- `proofs/docs-proofs/**` ✅ curated portal screenshots
-- `proofs/audit/**` ✅ redacted CLI/Terraform outputs
-- everything else under `proofs/**` ❌ ignored
+### Proofs & tooling
+- `tools/redact.ps1` — PowerShell redaction pipeline
+- `proofs/docs-proofs/` — **curated portal screenshots** (published)
+- `proofs/audit/` — **redacted audit artifacts** (published)
+- `proofs/_local/` — local-only raw artifacts (ignored by Git)
+
+Raw Terraform outputs, CLI dumps, tfstate files, and keys are **never committed**.
 
 ---
 
-## Security stance (the core selling point)
-### No public exposure of VMs
-- **No VM Public IPs**
-- No inbound SSH/RDP from the internet
-- Access is only via **Azure Bastion**
+## Security stance (core design)
 
-### NSG + ASG baseline
-- NSGs enforce least privilege between tiers
-- ASGs simplify rules (“frontend-asg → backend-asg” instead of IP-based rules)
+### No public exposure
+- VMs have **no Public IPs**
+- No direct inbound management traffic
+- Administrative access only via **Azure Bastion**
+
+### Network enforcement
+- NSGs enforce explicit, minimal flows
+- ASGs avoid IP-based rules and improve readability
+- Frontend ↔ Backend communication is tightly scoped
 
 ---
 
 ## Prerequisites
+
 - Terraform 1.x
 - Azure CLI (`az`)
 - An Azure subscription
-- PowerShell (for the redaction pipeline) — Windows-friendly by design
+- PowerShell (for the redaction pipeline)
 
 ---
 
-## Configure
-1) Login:
+## Typical workflow
+
+## Step 1: Authenticate
 ```bash
 az login
 az account show
-``` 
+```
 
-2) Create your local tfvars:
+## Step 2: Configure variables
 ```bash
 cp terraform.tfvars.example terraform.tfvars
 ```
-terraform.tfvars is ignored by .gitignore (correct). Never commit it.
+terraform.tfvars is ignored by .gitignore and must never be committed.
 
----
-
-## Deploy (reproducible workflow)
-From Repo root:
+## Step 3: Deploy
 ```bash
 terraform init
 terraform fmt
@@ -85,171 +124,76 @@ terraform validate
 terraform plan -out tfplan
 terraform apply tfplan
 ```
-
-optional sanity outputs:
+Optional sanity checks
 ```bash
 terraform state list
-terraform output -json
+terraform output
 ```
-
----
-
-## Destroy (FinOps / cost control)
+## Step 4: Destroy (cost control)
 ```bash
 terraform destroy
 ```
-Bastion Standard costs money if left running — the intended workflow is:
-deploy → capture proofs → destroy.
+Azure Bastion Standard incurs cost while running — the intended lifecycle is:
+deploy → verify → destroy.
 
 ---
 
-## Proofs: audit-ready by design
+### Proofs: audit-ready by design
 
-The rule
+## What is published
 
-✅ commit only curated screenshots + redacted outputs
-
-❌ never commit raw logs, raw CLI dumps, tfstate, tfplan, keys, tenant/subscription identifiers
-
-# What you publish
-
-- Curated screenshots (portal):
+# Curated portal screenshots
 
 - proofs/docs-proofs/run-<RUN_ID>/screens/
 
-- 01_rg_overview.png
+- Resource Group overview
 
-- 02_bastion_overview.png
+- Bastion deployment
 
-- 03_vnet_subnets.png
+- VNet & subnet layout
 
-# Redacted outputs (CLI/Terraform):
+# These screenshots demonstrate actual deployment results without leaking identifiers.
 
-- proofs/audit/run-<RUN_ID>/raw/
+- Redacted audit artifacts
 
-- redacted az outputs
+- proofs/audit/run-<RUN_ID>/
 
-- redacted terraform outputs
+- Sanitized CLI outputs
 
-- redacted plan/show/output JSON
+- Redacted Terraform verification artifacts
 
-Raw run folders stay local and ignored (by design).
+- No raw plans, no state, no secrets
 
----
+# What is intentionally excluded
 
-## Step-by-step: one complete proof run (0–15)
+- Raw Terraform plans / shows
 
-Use a run id like: YYYY-MM-DD_HHMMSS
-Example: 2026-02-09_145705
+- Terraform state files
 
-Create folders (PowerShell):
-```powershell
-$RUN_ID = (Get-Date).ToString("yyyy-MM-dd_HHmmss")
-New-Item -ItemType Directory -Force -Path "proofs\$RUN_ID\raw" | Out-Null
-New-Item -ItemType Directory -Force -Path "proofs\docs-proofs\run-$RUN_ID\screens" | Out-Null
-```
+- Unfiltered CLI dumps
 
-# Step 0: Run metadata
-Create proofs/<RUN_ID>/raw/00_run_meta.txt with:
+- Subscription IDs, tenant IDs, UPNs
 
-- timestamp
+- SSH keys (public or private)
 
-- repo + branch
+- This is a deliberate security decision, not a missing feature.
 
-- terraform version
+### Lessons learned (real-world)
 
-- short note about what you deployed
+Publishing raw infrastructure logs is a liability, not proof
 
-# Step 1-2: Azure account context
-```bash
-az account show > proofs/<RUN_ID>/raw/01_az_account_show.json
-az account show --query "{environmentName:environmentName,name:name,state:state,tenantId:tenantId,user:user,id:id,homeTenantId:homeTenantId}" \
-  > proofs/<RUN_ID>/raw/02_az_account_min.json
-```
+Security awareness includes knowing what not to publish
 
-# Step 3-6: Terraform baseline
-```bash
-terraform version > proofs/<RUN_ID>/raw/03_terraform_version.txt
-terraform init > proofs/<RUN_ID>/raw/04_terraform_init.txt
-terraform fmt -check -diff > proofs/<RUN_ID>/raw/05_terraform_fmt.txt
-terraform validate > proofs/<RUN_ID>/raw/06_terraform_validate.txt
-``` 
+Bastion fundamentally changes access patterns — SSH exposure becomes unnecessary
 
-# Step 7-12: Plan / apply / outputs
-```bash
-terraform plan -out tfplan > proofs/<RUN_ID>/raw/07_terraform_plan.txt
-terraform show -json tfplan > proofs/<RUN_ID>/raw/08_terraform_show_plan.json
-```
-PowerShell transcript for apply:
-```powershell
-Start-Transcript -Path "proofs\<RUN_ID>\raw\09_terraform_apply.txt" -Force
-terraform apply tfplan
-Stop-Transcript
-```
-```bash
-terraform show -json > proofs/<RUN_ID>/raw/10_terraform_show_postapply.json
-terraform state list > proofs/<RUN_ID>/raw/11_terraform_state_list.txt
-terraform output -json > proofs/<RUN_ID>/raw/12_terraform_output.json
-``` 
+Clean evidence beats verbose output
 
-# Step 13-15: Azure resource checks (adapt names to your RG/VNet)
-```bash
-az group show -n <RG_NAME> > proofs/<RUN_ID>/raw/13_rg_show.json
+Roadmap
 
-az network vnet list --query "[].{name:name,resourceGroup:resourceGroup,location:location,addressSpace:addressSpace}" \
-  > proofs/<RUN_ID>/raw/14_vnet_list.json
+- Network Watcher integration (NSG Flow Logs, redacted)
 
-az network vnet subnet list -g <RG_NAME> --vnet-name <VNET_NAME> \
-  > proofs/<RUN_ID>/raw/15_subnet_list.json
-```
+- Effective security rule evidence
 
----
+- Optional refactor into Terraform modules
 
-## Redaction: raw → audit-safe
-Run after raw files exist and before committing anything:
-```powershell
-pwsh -File .\tools\redact.ps1 `
-  -InputPath  "proofs\$RUN_ID\raw" `
-  -OutputPath "proofs\audit\run-$RUN_ID\raw"
-```
-Expected redactions:
-
-- subscription/tenant GUIDs
-
-- tenant domains / UPNs / emails
-
-- resource IDs
-
-- (optionally) SSH public keys (you enabled this — good)
-
-# Commit only the safe artifacts
-```bash
-git add proofs/docs-proofs proofs/audit
-git commit -m "docs(proofs): add curated screenshots + redacted audit outputs (run <RUN_ID>)"
-git push
-``` 
-
-## Lessons learned (real-world pitfalls)
-
-- Proofs are not proofs if they leak IDs or contain raw dumps → publish only curated + redacted artifacts.
-
-- tfplan / tfstate must never be committed → .gitignore hardening + remove from cache if ever tracked.
-
-- Bastion changes the whole access model → remove internet-exposed SSH; allow only internal access paths.
-
-- Portal screenshots can leak subscription/tenant info → crop/blur as needed.
-
-## Roadmap (next)
-
-- Network Watcher: NSG flow logs + troubleshooting artifacts (still redacted)
-
-- Add “effective security rules” evidence (redacted)
-
-- Optional: refactor into modules (network, security, compute, bastion)
-
-## Evidence
-
-- Curated portal screenshots: proofs/docs-proofs/
-
-- Redacted audit outputs: proofs/audit/
-
+- Expanded FinOps considerations
