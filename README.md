@@ -103,19 +103,19 @@ Raw Terraform outputs, CLI dumps, tfstate files, and keys are **never committed*
 
 ## Typical workflow
 
-## Step 1: Authenticate
+### Step 1: Authenticate
 ```bash
 az login
 az account show
 ```
 
-## Step 2: Configure variables
+### Step 2: Configure variables
 ```bash
 cp terraform.tfvars.example terraform.tfvars
 ```
 terraform.tfvars is ignored by .gitignore and must never be committed.
 
-## Step 3: Deploy
+### Step 3: Deploy
 ```bash
 terraform init
 terraform fmt
@@ -129,7 +129,7 @@ Optional sanity checks
 terraform state list
 terraform output
 ```
-## Step 4: Destroy (cost control)
+### Step 4: Destroy (cost control)
 ```bash
 terraform destroy
 ```
@@ -138,62 +138,65 @@ deploy → verify → destroy.
 
 ---
 
-### Proofs: audit-ready by design
+## Proofs: audit-ready by design
 
-## What is published
+### What is published
 
-# Curated portal screenshots
+#### Curated portal screenshots
+- `proofs/docs-proofs/run-<RUN_ID>/screens/`
+  - Resource Group overview
+  - Bastion deployment
+  - VNet & subnet layout
 
-- proofs/docs-proofs/run-<RUN_ID>/screens/
+These screenshots demonstrate actual deployment results without leaking identifiers.
 
-- Resource Group overview
+#### Redacted audit artifacts
+- `proofs/audit/run-<RUN_ID>/`
+  - Sanitized CLI outputs
+  - Redacted Terraform verification artifacts
+  - No raw plans, no state, no secrets
 
-- Bastion deployment
+### What is intentionally excluded
 
-- VNet & subnet layout
+ - Raw Terraform plans / shows
+ - Terraform state files
+ - Unfiltered CLI dumps
+ - Subscription IDs, tenant IDs, UPNs
+ - SSH keys (public or private)
+ - This is a deliberate security decision, not a missing feature.
 
-# These screenshots demonstrate actual deployment results without leaking identifiers.
+ ### Redaction pipeline (PowerShell)
 
-- Redacted audit artifacts
+This repo includes a lightweight redaction script: `tools/redact.ps1`.
 
-- proofs/audit/run-<RUN_ID>/
+What it does (high level):
+- Redacts subscription and tenant path segments (e.g., `/subscriptions/...`, `/tenants/...`)
+- Redacts common identifiers in JSON outputs (`subscriptionId`, `tenantId`, `principalId`, etc.)
+- Redacts tenant domains (`*.onmicrosoft.com`) and SSH public keys (`ssh-ed25519`, `ssh-rsa`)
 
-- Sanitized CLI outputs
+Why raw JSON/log dumps are still excluded:
+- Even with redaction, large `terraform show -json` / plan outputs tend to contain high-risk fields and edge cases
+- It’s easy to miss patterns (as shown by the SSH public key leak)
+- This repo therefore publishes **curated screenshots + minimal redacted evidence**, not raw output dumps
 
-- Redacted Terraform verification artifacts
+Example usage (local-only raw → published redacted):
+```powershell
+pwsh -File .\tools\redact.ps1 `
+  -InputPath  "proofs\_local\<RUN_ID>\raw" `
+  -OutputPath "proofs\audit\run-<RUN_ID>\redacted"
+```
 
-- No raw plans, no state, no secrets
-
-# What is intentionally excluded
-
-- Raw Terraform plans / shows
-
-- Terraform state files
-
-- Unfiltered CLI dumps
-
-- Subscription IDs, tenant IDs, UPNs
-
-- SSH keys (public or private)
-
-- This is a deliberate security decision, not a missing feature.
 
 ### Lessons learned (real-world)
 
-Publishing raw infrastructure logs is a liability, not proof
+- Publishing raw infrastructure logs is a liability, not proof
+- Security awareness includes knowing what not to publish
+- Bastion fundamentally changes access patterns — SSH exposure becomes unnecessary
+- Clean evidence beats verbose output
 
-Security awareness includes knowing what not to publish
+## Roadmap
 
-Bastion fundamentally changes access patterns — SSH exposure becomes unnecessary
-
-Clean evidence beats verbose output
-
-Roadmap
-
-- Network Watcher integration (NSG Flow Logs, redacted)
-
-- Effective security rule evidence
-
-- Optional refactor into Terraform modules
-
-- Expanded FinOps considerations
+ - Network Watcher integration (NSG Flow Logs, redacted)
+ - Effective security rule evidence
+ - Optional refactor into Terraform modules
+ - Expanded FinOps considerations
