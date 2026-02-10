@@ -2,6 +2,7 @@
 .terraform/
 *.tfstate
 *.tfstate.*
+terraform.tfstate.backup
 crash.log
 crash.*.log
 
@@ -19,11 +20,11 @@ azure_key
 azure_key.pub
 *.pem
 *.ppk
+*.key
 id_rsa
 id_rsa.pub
 id_ed25519
 id_ed25519.pub
-*.key
 
 # VS Code / OS
 .vscode/
@@ -37,19 +38,8 @@ proofs/**
 !proofs/docs-proofs/**
 !proofs/audit/**
 
-# Keep empty folders if needed
-!.gitkeep
+# But never allow raw dumps even inside allowed paths
+proofs/audit/**/raw/**
 
-# Terraform state
-*.tfstate
-*.tfstate.*
-terraform.tfstate.backup
-
-# SSH keys
-*.pem
-*.key
-*.pub
-
-# Raw proof outputs (never commit)
-proofs/**/raw/
-proofs/**/audit/**/raw/
+# Optional: keep empty folders (only inside proofs)
+!proofs/**/.gitkeep
