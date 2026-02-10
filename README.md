@@ -34,9 +34,9 @@ Terraform is intentionally split by concern:
 Proof + tooling:
 - `tools/redact.ps1` — redaction pipeline (raw → audit-safe)
 - `proofs/` — **only** curated + redacted artifacts are allowed in Git
-  - `proofs/docs-proofs/**` ✅ curated portal screenshots
-  - `proofs/audit/**` ✅ redacted CLI/Terraform outputs
-  - everything else under `proofs/**` ❌ ignored
+- `proofs/docs-proofs/**` ✅ curated portal screenshots
+- `proofs/audit/**` ✅ redacted CLI/Terraform outputs
+- everything else under `proofs/**` ❌ ignored
 
 ---
 
