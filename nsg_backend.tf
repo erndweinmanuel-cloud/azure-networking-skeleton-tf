@@ -1,9 +1,10 @@
 resource "azurerm_network_security_group" "nsg_backend" {
-  name                = "nsg-backend"
+  name                = "nsg-db"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
 }
 
+# Allow app traffic: web -> db (8080)
 resource "azurerm_network_security_rule" "allow_8080_web_to_db_asg" {
   name      = "allow-app-web-to-db"
   priority  = 110
@@ -21,13 +22,14 @@ resource "azurerm_network_security_rule" "allow_8080_web_to_db_asg" {
   network_security_group_name = azurerm_network_security_group.nsg_backend.name
 }
 
-# Bastion intern erlauben über SSH
-resource "azurerm_network_security_rule" "allow_ssh_to_backend_from_bastion" {
-  name                   = "allow-ssh-to-backend-from-bastion"
-  priority               = 100
-  direction              = "Inbound"
-  access                 = "Allow"
-  protocol               = "Tcp"
+# Bastion intern erlauben über SSH (nur zum DB-ASG)
+resource "azurerm_network_security_rule" "allow_ssh_to_db_from_bastion" {
+  name      = "allow-ssh-to-db-from-bastion"
+  priority  = 100
+  direction = "Inbound"
+  access    = "Allow"
+  protocol  = "Tcp"
+
   source_port_range      = "*"
   destination_port_range = "22"
 
@@ -68,6 +70,7 @@ resource "azurerm_network_security_rule" "deny_rdp_inbound_backend" {
   network_security_group_name = azurerm_network_security_group.nsg_backend.name
 }
 
+# Attach NSG to backend subnet
 resource "azurerm_subnet_network_security_group_association" "backend_assoc" {
   subnet_id                 = azurerm_subnet.backend.id
   network_security_group_id = azurerm_network_security_group.nsg_backend.id

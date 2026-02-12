@@ -1,9 +1,9 @@
-output "frontend_private_ip" {
-  value = azurerm_network_interface.nic_front.private_ip_address
+output "web_private_ip" {
+  value = azurerm_network_interface.nic_web.private_ip_address
 }
 
-output "backend_private_ip" {
-  value = azurerm_network_interface.nic_back.private_ip_address
+output "db_private_ip" {
+  value = azurerm_network_interface.nic_db.private_ip_address
 }
 
 output "bastion_public_ip" {

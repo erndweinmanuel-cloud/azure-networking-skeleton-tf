@@ -22,3 +22,4 @@ resource "azurerm_bastion_host" "bastion" {
     public_ip_address_id = azurerm_public_ip.pip_bastion.id
   }
 }
+

@@ -1,12 +1,12 @@
 resource "azurerm_network_security_group" "nsg_frontend" {
-  name                = "nsg-frontend"
+  name                = "nsg-web"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
 }
 
-# Allow SSH from Azure Bastion subnet only
-resource "azurerm_network_security_rule" "allow_ssh_from_bastion" {
-  name                        = "allow-ssh-from-bastion"
+# Bastion-only inbound management access (SSH/RDP)
+resource "azurerm_network_security_rule" "allow_ssh_to_web_from_bastion" {
+  name                        = "allow-ssh-to-web-from-bastion"
   priority                    = 100
   direction                   = "Inbound"
   access                      = "Allow"
@@ -19,9 +19,8 @@ resource "azurerm_network_security_rule" "allow_ssh_from_bastion" {
   network_security_group_name = azurerm_network_security_group.nsg_frontend.name
 }
 
-# Allow RDP from Azure Bastion subnet only (harmless for Linux, but future-proof)
-resource "azurerm_network_security_rule" "allow_rdp_from_bastion" {
-  name                        = "allow-rdp-from-bastion"
+resource "azurerm_network_security_rule" "allow_rdp_to_web_from_bastion" {
+  name                        = "allow-rdp-to-web-from-bastion"
   priority                    = 110
   direction                   = "Inbound"
   access                      = "Allow"
@@ -34,8 +33,8 @@ resource "azurerm_network_security_rule" "allow_rdp_from_bastion" {
   network_security_group_name = azurerm_network_security_group.nsg_frontend.name
 }
 
-# Explicit deny SSH inbound from anywhere else
-resource "azurerm_network_security_rule" "deny_ssh_inbound" {
+# Explicit deny inbound SSH/RDP from anywhere else
+resource "azurerm_network_security_rule" "deny_ssh_inbound_web" {
   name                        = "deny-ssh-inbound"
   priority                    = 200
   direction                   = "Inbound"
@@ -49,8 +48,7 @@ resource "azurerm_network_security_rule" "deny_ssh_inbound" {
   network_security_group_name = azurerm_network_security_group.nsg_frontend.name
 }
 
-# Explicit deny RDP inbound from anywhere else
-resource "azurerm_network_security_rule" "deny_rdp_inbound" {
+resource "azurerm_network_security_rule" "deny_rdp_inbound_web" {
   name                        = "deny-rdp-inbound"
   priority                    = 210
   direction                   = "Inbound"
@@ -64,9 +62,8 @@ resource "azurerm_network_security_rule" "deny_rdp_inbound" {
   network_security_group_name = azurerm_network_security_group.nsg_frontend.name
 }
 
-# Attach NSG to frontend Subnet
+# Attach NSG to frontend subnet
 resource "azurerm_subnet_network_security_group_association" "frontend_assoc" {
   subnet_id                 = azurerm_subnet.frontend.id
   network_security_group_id = azurerm_network_security_group.nsg_frontend.id
 }
-

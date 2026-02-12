@@ -55,7 +55,7 @@ resource "azurerm_storage_account" "flowlogs" {
 
 # Frontend Subnet
 resource "azurerm_network_watcher_flow_log" "fl_frontend" {
-  name                 = "flowlog-subnet-frontend"
+  name                 = "flowlog-subnet-web"
   network_watcher_name = data.azurerm_network_watcher.nw.name
   resource_group_name  = azurerm_resource_group.rg.name
   location             = azurerm_resource_group.rg.location
@@ -83,7 +83,7 @@ resource "azurerm_network_watcher_flow_log" "fl_frontend" {
 
 # Backend Subnet
 resource "azurerm_network_watcher_flow_log" "fl_backend" {
-  name                 = "flowlog-subnet-backend"
+  name                 = "flowlog-subnet-db"
   network_watcher_name = data.azurerm_network_watcher.nw.name
   resource_group_name  = azurerm_resource_group.rg.name
   location             = azurerm_resource_group.rg.location
@@ -107,3 +107,4 @@ resource "azurerm_network_watcher_flow_log" "fl_backend" {
     interval_in_minutes   = 10
   }
 }
+
