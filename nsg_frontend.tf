@@ -64,8 +64,9 @@ resource "azurerm_network_security_rule" "deny_rdp_inbound" {
   network_security_group_name = azurerm_network_security_group.nsg_frontend.name
 }
 
-# Attach NSG to frontend NIC
-resource "azurerm_network_interface_security_group_association" "frontend_nic_assoc" {
-  network_interface_id      = azurerm_network_interface.nic_front.id
+# Attach NSG to frontend Subnet
+resource "azurerm_subnet_network_security_group_association" "frontend_assoc" {
+  subnet_id                 = azurerm_subnet.frontend.id
   network_security_group_id = azurerm_network_security_group.nsg_frontend.id
 }
+
