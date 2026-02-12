@@ -1,4 +1,4 @@
-resource "azurerm_network_security_group" "nsg_backend" {
+resource "azurerm_network_security_group" "nsg_db" {
   name                = "nsg-db"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
@@ -19,7 +19,7 @@ resource "azurerm_network_security_rule" "allow_8080_web_to_db_asg" {
   destination_application_security_group_ids = [azurerm_application_security_group.asg_db.id]
 
   resource_group_name         = azurerm_resource_group.rg.name
-  network_security_group_name = azurerm_network_security_group.nsg_backend.name
+  network_security_group_name = azurerm_network_security_group.nsg_db.name
 }
 
 # Bastion intern erlauben über SSH (nur zum DB-ASG)
@@ -37,11 +37,11 @@ resource "azurerm_network_security_rule" "allow_ssh_to_db_from_bastion" {
   destination_application_security_group_ids = [azurerm_application_security_group.asg_db.id]
 
   resource_group_name         = azurerm_resource_group.rg.name
-  network_security_group_name = azurerm_network_security_group.nsg_backend.name
+  network_security_group_name = azurerm_network_security_group.nsg_db.name
 }
 
 # Explizit blocken: SSH
-resource "azurerm_network_security_rule" "deny_ssh_inbound_backend" {
+resource "azurerm_network_security_rule" "deny_ssh_inbound_db" {
   name                        = "deny-ssh-inbound"
   priority                    = 200
   direction                   = "Inbound"
@@ -52,11 +52,11 @@ resource "azurerm_network_security_rule" "deny_ssh_inbound_backend" {
   source_address_prefix       = "*"
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.rg.name
-  network_security_group_name = azurerm_network_security_group.nsg_backend.name
+  network_security_group_name = azurerm_network_security_group.nsg_db.name
 }
 
 # Explizit blocken: RDP
-resource "azurerm_network_security_rule" "deny_rdp_inbound_backend" {
+resource "azurerm_network_security_rule" "deny_rdp_inbound_db" {
   name                        = "deny-rdp-inbound"
   priority                    = 210
   direction                   = "Inbound"
@@ -67,11 +67,11 @@ resource "azurerm_network_security_rule" "deny_rdp_inbound_backend" {
   source_address_prefix       = "*"
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.rg.name
-  network_security_group_name = azurerm_network_security_group.nsg_backend.name
+  network_security_group_name = azurerm_network_security_group.nsg_db.name
 }
 
-# Attach NSG to backend subnet
-resource "azurerm_subnet_network_security_group_association" "backend_assoc" {
-  subnet_id                 = azurerm_subnet.backend.id
-  network_security_group_id = azurerm_network_security_group.nsg_backend.id
+# Attach NSG to db subnet
+resource "azurerm_subnet_network_security_group_association" "db_assoc" {
+  subnet_id                 = azurerm_subnet.db.id
+  network_security_group_id = azurerm_network_security_group.nsg_db.id
 }

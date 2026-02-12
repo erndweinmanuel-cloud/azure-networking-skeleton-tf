@@ -53,15 +53,15 @@ resource "azurerm_storage_account" "flowlogs" {
 # Subnet Flow Logs v2 -> Storage + Traffic Analytics -> Log Analytics
 ########################
 
-# Frontend Subnet
-resource "azurerm_network_watcher_flow_log" "fl_frontend" {
+# Web subnet
+resource "azurerm_network_watcher_flow_log" "fl_web" {
   name                 = "flowlog-subnet-web"
   network_watcher_name = data.azurerm_network_watcher.nw.name
   resource_group_name  = azurerm_resource_group.rg.name
   location             = azurerm_resource_group.rg.location
 
   # New model: target resource is subnet (not NSG)
-  target_resource_id = azurerm_subnet.frontend.id
+  target_resource_id = azurerm_subnet.web.id
   storage_account_id = azurerm_storage_account.flowlogs.id
 
   enabled = true
@@ -81,14 +81,14 @@ resource "azurerm_network_watcher_flow_log" "fl_frontend" {
   }
 }
 
-# Backend Subnet
-resource "azurerm_network_watcher_flow_log" "fl_backend" {
+# DB subnet
+resource "azurerm_network_watcher_flow_log" "fl_db" {
   name                 = "flowlog-subnet-db"
   network_watcher_name = data.azurerm_network_watcher.nw.name
   resource_group_name  = azurerm_resource_group.rg.name
   location             = azurerm_resource_group.rg.location
 
-  target_resource_id = azurerm_subnet.backend.id
+  target_resource_id = azurerm_subnet.db.id
   storage_account_id = azurerm_storage_account.flowlogs.id
 
   enabled = true
@@ -107,4 +107,3 @@ resource "azurerm_network_watcher_flow_log" "fl_backend" {
     interval_in_minutes   = 10
   }
 }
-

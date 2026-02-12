@@ -1,4 +1,4 @@
-resource "azurerm_network_security_group" "nsg_frontend" {
+resource "azurerm_network_security_group" "nsg_web" {
   name                = "nsg-web"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
@@ -16,7 +16,7 @@ resource "azurerm_network_security_rule" "allow_ssh_to_web_from_bastion" {
   source_address_prefix       = azurerm_subnet.bastion.address_prefixes[0]
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.rg.name
-  network_security_group_name = azurerm_network_security_group.nsg_frontend.name
+  network_security_group_name = azurerm_network_security_group.nsg_web.name
 }
 
 resource "azurerm_network_security_rule" "allow_rdp_to_web_from_bastion" {
@@ -30,7 +30,7 @@ resource "azurerm_network_security_rule" "allow_rdp_to_web_from_bastion" {
   source_address_prefix       = azurerm_subnet.bastion.address_prefixes[0]
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.rg.name
-  network_security_group_name = azurerm_network_security_group.nsg_frontend.name
+  network_security_group_name = azurerm_network_security_group.nsg_web.name
 }
 
 # Explicit deny inbound SSH/RDP from anywhere else
@@ -45,7 +45,7 @@ resource "azurerm_network_security_rule" "deny_ssh_inbound_web" {
   source_address_prefix       = "*"
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.rg.name
-  network_security_group_name = azurerm_network_security_group.nsg_frontend.name
+  network_security_group_name = azurerm_network_security_group.nsg_web.name
 }
 
 resource "azurerm_network_security_rule" "deny_rdp_inbound_web" {
@@ -59,11 +59,11 @@ resource "azurerm_network_security_rule" "deny_rdp_inbound_web" {
   source_address_prefix       = "*"
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.rg.name
-  network_security_group_name = azurerm_network_security_group.nsg_frontend.name
+  network_security_group_name = azurerm_network_security_group.nsg_web.name
 }
 
-# Attach NSG to frontend subnet
-resource "azurerm_subnet_network_security_group_association" "frontend_assoc" {
-  subnet_id                 = azurerm_subnet.frontend.id
-  network_security_group_id = azurerm_network_security_group.nsg_frontend.id
+# Attach NSG to web subnet
+resource "azurerm_subnet_network_security_group_association" "web_assoc" {
+  subnet_id                 = azurerm_subnet.web.id
+  network_security_group_id = azurerm_network_security_group.nsg_web.id
 }

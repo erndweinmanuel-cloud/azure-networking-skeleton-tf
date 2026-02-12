@@ -21,3 +21,4 @@ resource "azurerm_network_interface_application_security_group_association" "nic
   network_interface_id          = azurerm_network_interface.nic_db.id
   application_security_group_id = azurerm_application_security_group.asg_db.id
 }
+

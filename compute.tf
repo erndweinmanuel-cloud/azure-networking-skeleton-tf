@@ -5,7 +5,7 @@ resource "azurerm_network_interface" "nic_web" {
 
   ip_configuration {
     name                          = "ipconfig-web"
-    subnet_id                     = azurerm_subnet.frontend.id
+    subnet_id                     = azurerm_subnet.web.id
     private_ip_address_allocation = "Dynamic"
   }
 }
@@ -17,7 +17,7 @@ resource "azurerm_network_interface" "nic_db" {
 
   ip_configuration {
     name                          = "ipconfig-db"
-    subnet_id                     = azurerm_subnet.backend.id
+    subnet_id                     = azurerm_subnet.db.id
     private_ip_address_allocation = "Dynamic"
   }
 }
@@ -73,3 +73,4 @@ resource "azurerm_linux_virtual_machine" "vm_db" {
     version   = "latest"
   }
 }
+
