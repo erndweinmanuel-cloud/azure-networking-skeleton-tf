@@ -57,8 +57,10 @@ resource "azurerm_storage_account" "flowlogs" {
 resource "azurerm_network_watcher_flow_log" "fl_web" {
   name                 = "flowlog-subnet-web"
   network_watcher_name = data.azurerm_network_watcher.nw.name
-  resource_group_name  = azurerm_resource_group.rg.name
-  location             = azurerm_resource_group.rg.location
+
+  # IMPORTANT: must be the Network Watcher RG, not your project RG
+  resource_group_name = data.azurerm_network_watcher.nw.resource_group_name
+  location            = data.azurerm_network_watcher.nw.location
 
   # New model: target resource is subnet (not NSG)
   target_resource_id = azurerm_subnet.web.id
@@ -85,8 +87,10 @@ resource "azurerm_network_watcher_flow_log" "fl_web" {
 resource "azurerm_network_watcher_flow_log" "fl_db" {
   name                 = "flowlog-subnet-db"
   network_watcher_name = data.azurerm_network_watcher.nw.name
-  resource_group_name  = azurerm_resource_group.rg.name
-  location             = azurerm_resource_group.rg.location
+
+  # IMPORTANT: must be the Network Watcher RG, not your project RG
+  resource_group_name = data.azurerm_network_watcher.nw.resource_group_name
+  location            = data.azurerm_network_watcher.nw.location
 
   target_resource_id = azurerm_subnet.db.id
   storage_account_id = azurerm_storage_account.flowlogs.id

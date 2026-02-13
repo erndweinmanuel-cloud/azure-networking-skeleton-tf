@@ -34,8 +34,11 @@ Thumbs.db
 # Proofs: ignore everything by default
 proofs/**
 
-# Allow ONLY public curated screenshots + redacted audit outputs
+# Re-allow curated proof folders (need parent paths un-ignored too)
+!proofs/
+!proofs/docs-proofs/
 !proofs/docs-proofs/**
+!proofs/audit/
 !proofs/audit/**
 
 # But never allow raw dumps even inside allowed paths
