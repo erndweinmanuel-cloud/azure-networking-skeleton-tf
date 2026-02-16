@@ -1,202 +1,195 @@
-# azure-networking-skeleton-tf
+# Azure Networking Skeleton (Terraform)
 
-**Azure Networking Security Baseline (Terraform)**  
-A production-style Azure networking setup with **private Linux VMs**, **Azure Bastion (Standard)**, and **hardened NSGs + ASGs** — designed to demonstrate **secure-by-default architecture**, clean Terraform workflows, and security-aware proof handling.
+Terraform-based Azure networking setup with:
 
-This repository intentionally focuses on **architecture, security posture, and reproducibility** rather than publishing raw infrastructure logs.
+- Private Linux VMs (no public IPs)
+- Azure Bastion for SSH access
+- NSGs attached at subnet level
+- Application Security Groups (web/db separation)
+- Subnet Flow Logs (v2)
+- Log Analytics + KQL validation
+- Full deploy → verify → destroy lifecycle
 
----
-
-## Why this repo exists
-
-This project demonstrates how to build a **secure Azure network baseline** that reflects real-world best practices:
-
-- No public exposure of workloads
-- Controlled administrative access via Azure Bastion
-- Clear separation of tiers (frontend / backend)
-- Least-privilege network rules
-- Clean Terraform lifecycle (deploy → verify → destroy)
-- Proofs that are **curated and security-safe**
-
-It is built as a **portfolio-grade reference**, not a lab dump.
+Region: westeurope
 
 ---
 
-## Key characteristics
+## Network Design Overview
 
-- **Secure by default**
-  - No VM Public IPs
-  - No inbound SSH/RDP from the internet
-  - Bastion-based access only
-- **Reproducible**
-  - Deterministic Terraform workflow
-  - Clear separation of concerns in code structure
-- **Recruiter-friendly**
-  - Curated evidence instead of raw dumps
-  - No secrets, no state files, no leaked identifiers
+Virtual Network: `10.0.0.0/16`
 
----
+Subnets:
 
-## What this deploys
+- `subnet-web` → 10.0.1.0/24 → `vm-web01`
+- `subnet-db`  → 10.0.2.0/24 → `vm-db01`
+- `AzureBastionSubnet` → 10.0.10.0/26 → Bastion
 
-- **Virtual Network**
-  - Dedicated frontend and backend subnets
-- **Azure Bastion Standard**
-  - Deployed into `AzureBastionSubnet`
-- **Two Linux VMs**
-  - Frontend VM
-  - Backend VM
-  - Both without Public IPs
-- **Network Security Groups (NSGs)**
-  - Enforcing least-privilege traffic between tiers
-- **Application Security Groups (ASGs)**
-  - Logical grouping of workloads for clean NSG rules
+Design decisions:
+
+- No VM has a Public IP
+- SSH access only via Azure Bastion
+- NSGs attached at subnet scope
+- Explicit deny rules for SSH/RDP from non-Bastion sources
+- App traffic rule: web → db on port 8080 (via ASGs)
 
 ---
 
-## Repository layout
+## Observability Setup
 
-### Terraform code
-- `providers.tf` — AzureRM provider configuration
-- `variables.tf` — input variables
-- `terraform.tfvars.example` — example variables (never commit real values)
-- `main.tf` — core wiring and base resources
-- `compute.tf` — Linux VMs (private only)
-- `bastion.tf` — Azure Bastion Standard
-- `asg.tf` — Application Security Groups
-- `nsg_frontend.tf` — frontend NSG rules
-- `nsg_backend.tf` — backend NSG rules
-- `outputs.tf` — outputs used for validation
+Subnet Flow Logs (v2) enabled for:
 
-### Proofs & tooling
-- `tools/redact.ps1` — PowerShell redaction pipeline
-- `proofs/docs-proofs/` — **curated portal screenshots** (published)
-- `proofs/audit/` — **redacted audit artifacts** (published)
-- `proofs/_local/` — local-only raw artifacts (ignored by Git)
+- subnet-web
+- subnet-db
 
-Raw Terraform outputs, CLI dumps, tfstate files, and keys are **never committed**.
+Flow logs are sent to:
+
+- Storage Account
+- Traffic Analytics
+- Log Analytics Workspace
+
+Validation is performed using KQL queries in Log Analytics.
+
+No raw JSON or CLI dumps are published in this repository.
 
 ---
 
-## Security stance (core design)
+## Validation Run – 2026-02-13
 
-### No public exposure
-- VMs have **no Public IPs**
-- No direct inbound management traffic
-- Administrative access only via **Azure Bastion**
+Screenshots are stored under:
 
-### Network enforcement
-- NSGs enforce explicit, minimal flows
-- ASGs avoid IP-based rules and improve readability
-- Frontend ↔ Backend communication is tightly scoped
+`proofs/docs-proofs/run-2026-02-13_075327/screens/`
 
 ---
 
-## Prerequisites
+### 1) Deployment completed
 
-- Terraform 1.x
-- Azure CLI (`az`)
-- An Azure subscription
-- PowerShell (for the redaction pipeline)
+Terraform apply completed successfully.
 
----
+![01_apply_complete](proofs/docs-proofs/run-2026-02-13_075327/screens/01_apply_complete.png)
 
-## Typical workflow
+Resource Group overview:
 
-### Step 1: Authenticate
-```bash
-az login
-az account show
-```
-
-### Step 2: Configure variables
-```bash
-cp terraform.tfvars.example terraform.tfvars
-```
-terraform.tfvars is ignored by .gitignore and must never be committed.
-
-### Step 3: Deploy
-```bash
-terraform init
-terraform fmt
-terraform validate
-
-terraform plan -out tfplan
-terraform apply tfplan
-```
-Optional sanity checks
-```bash
-terraform state list
-terraform output
-```
-### Step 4: Destroy (cost control)
-```bash
-terraform destroy
-```
-Azure Bastion Standard incurs cost while running — the intended lifecycle is:
-deploy → verify → destroy.
+![02_rg_overview](proofs/docs-proofs/run-2026-02-13_075327/screens/02_rg_overview.png)
 
 ---
 
-## Proofs: audit-ready by design
+### 2) Bastion SSH access
 
-### What is published
+Bastion used to access vm-web01.
 
-#### Curated portal screenshots
-- `proofs/docs-proofs/run-<RUN_ID>/screens/`
-  - Resource Group overview
-  - Bastion deployment
-  - VNet & subnet layout
+![03_bastion_connect_form](proofs/docs-proofs/run-2026-02-13_075327/screens/03_bastion_connect_form.png)
 
-These screenshots demonstrate actual deployment results without leaking identifiers.
+Hostname confirmation:
 
-#### Redacted audit artifacts
-- `proofs/audit/run-<RUN_ID>/`
-  - Sanitized CLI outputs
-  - Redacted Terraform verification artifacts
-  - No raw plans, no state, no secrets
+![04_bastion_ssh_hostname](proofs/docs-proofs/run-2026-02-13_075327/screens/04_bastion_ssh_hostname.png)
 
-### What is intentionally excluded
+---
 
- - Raw Terraform plans / shows
- - Terraform state files
- - Unfiltered CLI dumps
- - Subscription IDs, tenant IDs, UPNs
- - SSH keys (public or private)
- - This is a deliberate security decision, not a missing feature.
+### 3) Allowed traffic test (8080)
 
- ### Redaction pipeline (PowerShell)
+Simple HTTP server running on db VM:
 
-This repo includes a lightweight redaction script: `tools/redact.ps1`.
+![05b_db_httpserver_8080](proofs/docs-proofs/run-2026-02-13_075327/screens/05b_db_httpserver_8080.png)
 
-What it does (high level):
-- Redacts subscription and tenant path segments (e.g., `/subscriptions/...`, `/tenants/...`)
-- Redacts common identifiers in JSON outputs (`subscriptionId`, `tenantId`, `principalId`, etc.)
-- Redacts tenant domains (`*.onmicrosoft.com`) and SSH public keys (`ssh-ed25519`, `ssh-rsa`)
+curl requests from web → db on port 8080:
 
-Why raw JSON/log dumps are still excluded:
-- Even with redaction, large `terraform show -json` / plan outputs tend to contain high-risk fields and edge cases
-- It’s easy to miss patterns (as shown by the SSH public key leak)
-- This repo therefore publishes **curated screenshots + minimal redacted evidence**, not raw output dumps
+![05_allowed_8080_curl](proofs/docs-proofs/run-2026-02-13_075327/screens/05_allowed_8080_curl.png)
 
-Example usage (local-only raw → published redacted):
-```powershell
-pwsh -File .\tools\redact.ps1 `
-  -InputPath  "proofs\_local\<RUN_ID>\raw" `
-  -OutputPath "proofs\audit\run-<RUN_ID>\redacted"
-```
+Expected result: traffic allowed by NSG rule.
 
+---
 
-### Lessons learned (real-world)
+### 4) Denied traffic test (3389)
 
-- Publishing raw infrastructure logs is a liability, not proof
-- Security awareness includes knowing what not to publish
-- Bastion fundamentally changes access patterns — SSH exposure becomes unnecessary
-- Clean evidence beats verbose output
+nc connection attempts from web → db on port 3389:
 
-## Roadmap
+![06_denied_3389_nc](proofs/docs-proofs/run-2026-02-13_075327/screens/06_denied_3389_nc.png)
 
- - Network Watcher integration (NSG Flow Logs, redacted)
- - Effective security rule evidence
- - Optional refactor into Terraform modules
- - Expanded FinOps considerations
+Expected result: inbound traffic denied by NSG rule.
+
+---
+
+### 5) Flow Logs enabled
+
+Flow logs enabled on subnet-web:
+
+![07_flowlog_subnet_web_enabled](proofs/docs-proofs/run-2026-02-13_075327/screens/07_flowlog_subnet_web_enabled.png)
+
+Flow logs enabled on subnet-db:
+
+![08_flowlog_subnet_db_enabled](proofs/docs-proofs/run-2026-02-13_075327/screens/08_flowlog_subnet_db_enabled.png)
+
+---
+
+### 6) Log ingestion verified
+
+Log Analytics query view:
+
+![09_law_logs_view](proofs/docs-proofs/run-2026-02-13_075327/screens/09_law_logs_view.png)
+
+Sample NTA data:
+
+![10_kql_ntanetanalytics_take50](proofs/docs-proofs/run-2026-02-13_075327/screens/10_kql_ntanetanalytics_take50.png)
+
+---
+
+### 7) KQL validation
+
+FlowStatus distribution:
+
+![11d_kql_flowstatus_values](proofs/docs-proofs/run-2026-02-13_075327/screens/11d_kql_flowstatus_values.png)
+
+Allowed vs Denied summary:
+
+![12_kql_allowed_denied_summary](proofs/docs-proofs/run-2026-02-13_075327/screens/12_kql_allowed_denied_summary.png)
+
+Port-level summary (8080 vs 3389):
+
+![13_kql_ports_8080_3389_summary](proofs/docs-proofs/run-2026-02-13_075327/screens/13_kql_ports_8080_3389_summary.png)
+
+3389 direction detail:
+
+![17_kql_3389_direction_detail](proofs/docs-proofs/run-2026-02-13_075327/screens/17_kql_3389_direction_detail.png)
+
+8080 direction detail:
+
+![18_kql_8080_direction_detail](proofs/docs-proofs/run-2026-02-13_075327/screens/18_kql_8080_direction_detail.png)
+
+---
+
+### 8) Cleanup
+
+Environment destroyed using Terraform.
+
+![19_terraform_destroy_complete](proofs/docs-proofs/run-2026-02-13_075327/screens/19_terraform_destroy_complete.png)
+
+---
+
+## Notes
+
+- Raw Terraform/CLI outputs are not published.
+- Manual redaction of JSON outputs was tested and discarded due to risk of incomplete sanitization.
+
+---
+
+## Evidence Strategy & Pivot
+
+Initial approach:
+- Terraform / Azure CLI JSON outputs
+- Automated redaction via PowerShell script
+- Publishing sanitized audit dumps
+
+Issue:
+- Regex-based redaction was not fully reliable.
+- Sensitive fragments (e.g. SSH key material) could remain partially visible.
+- Manual verification effort too high to guarantee safety.
+
+Decision:
+- No raw dumps are published.
+- Only platform-generated evidence is used:
+  - Azure Portal views
+  - Flow Log configuration
+  - Log Analytics (KQL) results
+
+Rationale:
+Security > completeness of raw output.
