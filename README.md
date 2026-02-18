@@ -101,11 +101,18 @@ Expected result: traffic allowed by NSG rule.
 
 ### 4) Denied traffic test (3389)
 
+Port 3389 was used as a controlled negative test case to validate east-west network segmentation.
+
+Although both virtual machines are Linux-based (no RDP service running), the NSG explicitly denies port 3389 between subnets.  
+This ensures consistent segmentation logic and keeps the design future-proof in case Windows workloads are added later.
+
 nc connection attempts from web → db on port 3389:
 
 ![06_denied_3389_nc](proofs/docs-proofs/run-2026-02-13_075327/screens/06_denied_3389_nc.png)
 
 Expected result: inbound traffic denied by NSG rule.
+
+The deny behavior was verified via Flow Logs and confirmed through KQL queries in Log Analytics.
 
 ---
 
