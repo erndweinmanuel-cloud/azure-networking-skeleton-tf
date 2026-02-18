@@ -191,5 +191,93 @@ Decision:
   - Flow Log configuration
   - Log Analytics (KQL) results
 
-Rationale:
-Security > completeness of raw output.
+---
+
+## Roadmap & Milestones
+
+Legend:
+- ✅ Completed
+- 🔄 In Progress
+- ⏳ Planned
+
+
+### v1.0 — Networking + Observability Evidence (current)
+
+Status: ✅ Completed
+
+Scope:
+- Private Linux VMs (no public IPs)
+- Azure Bastion for SSH
+- NSGs at subnet scope + ASGs (web/db separation)
+- Subnet Flow Logs (v2) + Log Analytics + KQL validation
+- Full deploy → verify → destroy lifecycle
+
+Evidence:
+- proofs/docs-proofs/run-2026-02-13_075327/screens/
+
+---
+
+### v1.1 — Remote Terraform State (Azure Backend)
+
+Status: 🔄 In Progress
+
+Goal:
+Move Terraform state from local files to a remote backend to make this repository team-ready and CI-compatible.
+
+Planned:
+- Dedicated Storage Account for Terraform state
+- Private Blob container for state file
+- `backend "azurerm"` configuration in separate `backend.tf`
+- Backend configuration decoupled from main infrastructure code
+- No hardcoded subscription / resource identifiers in backend block
+- `terraform init -migrate-state` to move local state
+- Local `.tfstate` files fully removed
+- State locking enabled (Azure Blob lease mechanism)
+- Backend access restricted via RBAC
+
+Technical Focus:
+- Separation of concerns (state infra vs workload infra)
+- Secure backend configuration
+- Reproducible initialization process
+
+Evidence (to add when completed):
+- Storage Account + container configuration
+- Successful state migration proof
+- Confirmation that local state no longer exists
+- Lock test (parallel run prevention)
+
+---
+
+
+### v1.2 — CI/CD Pipeline (GitHub Actions + OIDC)
+
+Status: ⏳ Planned
+
+Goal:
+Execute Terraform in a controlled pipeline using federated identity and minimal permissions. No stored secrets.
+
+Planned:
+- GitHub Actions workflow:
+  - `terraform fmt` and `terraform validate` on push/PR
+  - `terraform plan` on PR
+  - `terraform apply` only via `workflow_dispatch`
+- OIDC authentication (GitHub → Azure)
+- Federated Credential in Azure (no client secret)
+- No secrets stored in repository
+- Minimal RBAC (Contributor at Resource Group scope)
+- No Owner role assigned
+- Principle of Least Privilege enforced
+- GitHub Environments approval gate before apply
+- Separate plan and apply stages
+
+Technical Focus:
+- Secretless authentication
+- Controlled deployment flow
+- Environment separation
+- Reproducible CI execution
+
+Evidence (to add when completed):
+- Workflow run proof (plan stage)
+- Apply approval gate proof
+- Federated credential configuration in Azure
+- RBAC scope proof (RG-level, no Owner)
