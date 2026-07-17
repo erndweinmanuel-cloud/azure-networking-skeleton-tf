@@ -219,7 +219,7 @@ Evidence:
 
 ### v1.1 — Remote Terraform State (Azure Backend)
 
-Status: ⏳ In Progress
+Status: 🔄 In Progress
 
 Goal:
 Move Terraform state from local files to a remote backend to make this repository team-ready and CI-compatible.
