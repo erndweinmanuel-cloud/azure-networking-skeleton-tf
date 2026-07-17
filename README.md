@@ -16,6 +16,13 @@ Region: westeurope
 
 ## Network Design Overview
 
+> [!NOTE]
+> This repository is intentionally designed as a networking skeleton and learning environment, not as a complete production landing zone.
+>
+> The current virtual network represents the foundation of a future spoke network. In a later architecture version, it will be connected to a central hub as part of a hub-and-spoke topology.
+>
+> Azure Bastion is currently deployed inside this VNet to keep the repository independently deployable and fully testable. In the future hub-and-spoke design, Azure Bastion will be moved to the central hub and shared with the connected spokes.
+
 Virtual Network: `10.0.0.0/16`
 
 Subnets:
@@ -281,3 +288,6 @@ Evidence (to add when completed):
 - Apply approval gate proof
 - Federated credential configuration in Azure
 - RBAC scope proof (RG-level, no Owner)
+
+
+
