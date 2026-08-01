@@ -27,12 +27,12 @@ resource "azurerm_linux_virtual_machine" "vm_web" {
   location              = azurerm_resource_group.rg.location
   resource_group_name   = azurerm_resource_group.rg.name
   size                  = "Standard_B2s"
-  admin_username        = "azureuser"
+  admin_username        = var.admin_username
   network_interface_ids = [azurerm_network_interface.nic_web.id]
 
   admin_ssh_key {
-    username   = "azureuser"
-    public_key = file("${path.module}/azure_key.pub")
+    username   = var.admin_username
+    public_key = trimspace(var.ssh_public_key)
   }
 
   os_disk {
@@ -53,12 +53,12 @@ resource "azurerm_linux_virtual_machine" "vm_db" {
   location              = azurerm_resource_group.rg.location
   resource_group_name   = azurerm_resource_group.rg.name
   size                  = "Standard_B2s"
-  admin_username        = "azureuser"
+  admin_username        = var.admin_username
   network_interface_ids = [azurerm_network_interface.nic_db.id]
 
   admin_ssh_key {
-    username   = "azureuser"
-    public_key = file("${path.module}/azure_key.pub")
+    username   = var.admin_username
+    public_key = trimspace(var.ssh_public_key)
   }
 
   os_disk {
@@ -73,4 +73,3 @@ resource "azurerm_linux_virtual_machine" "vm_db" {
     version   = "latest"
   }
 }
-
