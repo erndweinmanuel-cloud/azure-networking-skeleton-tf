@@ -5,9 +5,11 @@ resource "azurerm_network_interface" "nic_web" {
 
   ip_configuration {
     name                          = "ipconfig-web"
-    subnet_id                     = azurerm_subnet.web.id
+    subnet_id                     = azurerm_subnet.this["app_workload"].id
     private_ip_address_allocation = "Dynamic"
   }
+
+  tags = local.common_tags
 }
 
 resource "azurerm_network_interface" "nic_db" {
@@ -17,9 +19,11 @@ resource "azurerm_network_interface" "nic_db" {
 
   ip_configuration {
     name                          = "ipconfig-db"
-    subnet_id                     = azurerm_subnet.db.id
+    subnet_id                     = azurerm_subnet.this["data_workload"].id
     private_ip_address_allocation = "Dynamic"
   }
+
+  tags = local.common_tags
 }
 
 resource "azurerm_linux_virtual_machine" "vm_web" {
@@ -46,6 +50,8 @@ resource "azurerm_linux_virtual_machine" "vm_web" {
     sku       = "22_04-lts"
     version   = "latest"
   }
+
+  tags = local.common_tags
 }
 
 resource "azurerm_linux_virtual_machine" "vm_db" {
@@ -72,4 +78,6 @@ resource "azurerm_linux_virtual_machine" "vm_db" {
     sku       = "22_04-lts"
     version   = "latest"
   }
+
+  tags = local.common_tags
 }

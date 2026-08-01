@@ -78,4 +78,26 @@ locals {
       allow_forwarded_traffic = true
     }
   }
+
+  application_security_groups = {
+    app = {
+      name = "asg-app"
+    }
+
+    data = {
+      name = "asg-data"
+    }
+  }
+
+  flow_log_targets = {
+    app = {
+      name       = "flowlog-snet-app"
+      subnet_key = "app_workload"
+    }
+
+    data = {
+      name       = "flowlog-snet-data"
+      subnet_key = "data_workload"
+    }
+  }
 }

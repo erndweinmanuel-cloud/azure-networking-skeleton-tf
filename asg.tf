@@ -1,24 +1,29 @@
-resource "azurerm_application_security_group" "asg_web" {
-  name                = "asg-web"
+resource "azurerm_application_security_group" "this" {
+  for_each = local.application_security_groups
+
+  name                = each.value.name
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
+
+  tags = local.common_tags
 }
 
-resource "azurerm_application_security_group" "asg_db" {
-  name                = "asg-db"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
-}
+resource "azurerm_network_interface_application_security_group_association" "this" {
+  for_each = {
+    app = {
+      network_interface_id = azurerm_network_interface.nic_web.id
+      asg_key              = "app"
+    }
 
-# Associate NIC -> ASG (web)
-resource "azurerm_network_interface_application_security_group_association" "nic_web_asg_web" {
-  network_interface_id          = azurerm_network_interface.nic_web.id
-  application_security_group_id = azurerm_application_security_group.asg_web.id
-}
+    data = {
+      network_interface_id = azurerm_network_interface.nic_db.id
+      asg_key              = "data"
+    }
+  }
 
-# Associate NIC -> ASG (db)
-resource "azurerm_network_interface_application_security_group_association" "nic_db_asg_db" {
-  network_interface_id          = azurerm_network_interface.nic_db.id
-  application_security_group_id = azurerm_application_security_group.asg_db.id
-}
+  network_interface_id = each.value.network_interface_id
 
+  application_security_group_id = (
+    azurerm_application_security_group.this[each.value.asg_key].id
+  )
+}
