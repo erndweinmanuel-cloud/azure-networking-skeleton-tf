@@ -38,3 +38,15 @@ variable "ssh_public_key" {
     error_message = "ssh_public_key must contain a valid OpenSSH public key."
   }
 }
+
+variable "environment" {
+  type        = string
+  description = "Deployment environment used for tagging and naming."
+  default     = "lab"
+}
+
+variable "project_name" {
+  type        = string
+  description = "Project name used for tagging and resource identification."
+  default     = "azure-networking-skeleton"
+}
