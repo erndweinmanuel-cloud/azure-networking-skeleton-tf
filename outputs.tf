@@ -43,3 +43,16 @@ output "peering_ids" {
     key => peering.id
   }
 }
+output "nva_private_ip" {
+  description = "Static private IP address of the network virtual appliance."
+  value       = azurerm_network_interface.nic_nva.private_ip_address
+}
+
+output "route_table_ids" {
+  description = "Resource IDs of the spoke route tables."
+
+  value = {
+    for key, route_table in azurerm_route_table.spoke :
+    key => route_table.id
+  }
+}
