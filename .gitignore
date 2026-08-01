@@ -46,3 +46,6 @@ proofs/audit/**/raw/**
 
 # Optional: keep empty folders (only inside proofs)
 !proofs/**/.gitkeep
+
+# Local backend configuration
+backend.hcl

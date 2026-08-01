@@ -1,0 +1,11 @@
+location               = "westeurope"
+resource_group_name    = "rg-tfstate-networking"
+storage_account_prefix = "sttfnetworking"
+container_name         = "tfstate"
+
+tags = {
+  environment = "lab"
+  project     = "azure-networking-skeleton"
+  managed_by  = "terraform"
+  purpose     = "terraform-state"
+}
