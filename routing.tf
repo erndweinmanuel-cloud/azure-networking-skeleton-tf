@@ -49,9 +49,6 @@ resource "azurerm_route" "spoke" {
   next_hop_type          = "VirtualAppliance"
   next_hop_in_ip_address = azurerm_network_interface.nic_nva.private_ip_address
 
-  depends_on = [
-    azurerm_virtual_network_peering.this
-  ]
 }
 
 resource "azurerm_subnet_route_table_association" "spoke" {

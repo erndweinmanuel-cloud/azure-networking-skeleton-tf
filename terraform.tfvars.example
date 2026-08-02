@@ -1,1 +1,9 @@
-my_public_ip_cidr = "YOUR_PUBLIC_IP/32"
+# Copy this file to terraform.tfvars and replace the placeholders.
+
+ssh_public_key      = "ssh-ed25519 AAAA... user@example"
+vm_admin_principal_id = "00000000-0000-0000-0000-000000000000"
+
+rg_name      = "rg-networking-tf"
+location     = "westeurope"
+environment  = "lab"
+project_name = "azure-networking-skeleton"

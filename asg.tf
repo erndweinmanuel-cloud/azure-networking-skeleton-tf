@@ -9,16 +9,11 @@ resource "azurerm_application_security_group" "this" {
 }
 
 resource "azurerm_network_interface_application_security_group_association" "this" {
-  for_each = {
-    data = {
-      network_interface_id = azurerm_network_interface.workload["data"].id
-      asg_key              = "data"
-    }
-  }
+  for_each = local.workload_vms
 
-  network_interface_id = each.value.network_interface_id
+  network_interface_id = azurerm_network_interface.workload[each.key].id
 
   application_security_group_id = (
-    azurerm_application_security_group.this[each.value.asg_key].id
+    azurerm_application_security_group.this[each.key].id
   )
 }
