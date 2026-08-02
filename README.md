@@ -1,269 +1,259 @@
-# Azure Networking Skeleton (Terraform)
+# Azure Networking Skeleton with Terraform
 
-Terraform-based Azure hub-and-spoke networking lab with:
+A reproducible Azure networking lab built with Terraform. The repository focuses on hub-and-spoke networking, private administration, traffic control, observability, remote state and a controlled deployment lifecycle.
 
-- Dedicated hub plus application and data spokes
-- Azure Bastion as a shared management service in the hub
-- Linux NVA with IP forwarding for spoke-to-spoke transit
-- UDRs that force application/data traffic through the NVA
-- Private Linux VMs with no public IP addresses
-- Subnet-level NSGs and App/Data Application Security Groups
-- Microsoft Entra SSH login with explicit RBAC assignment
-- Subnet Flow Logs v2, Traffic Analytics and Log Analytics
-- Dedicated Azure Blob backend with state locking and RBAC
-- Full deploy, validate and destroy lifecycle
+> This is a portfolio and learning project, not a complete production landing zone.
 
-Region: `westeurope`
+## Current status
 
----
+The core infrastructure is implemented, validated and safely destroyable.
 
-## Current Architecture
+- Root and bootstrap configurations pass `terraform validate`
+- Terraform state is stored in a separate Azure Blob backend
+- The workload was successfully destroyed while the remote backend remained intact
+- A clean rebuild was verified with: `54 to add, 0 to change, 0 to destroy`
+- CI/CD with GitHub Actions, Checkov and Azure OIDC is the next milestone
 
-> [!NOTE]
-> This repository is a portfolio and learning environment, not a complete production landing zone. The architecture demonstrates separation of concerns, controlled transit, shared services and repeatable Infrastructure as Code.
+## Architecture
 
-### Address spaces
+```text
+                           Azure Bastion
+                                |
+                         +------v------+
+                         |   Hub VNet   |
+                         | 10.0.0.0/16  |
+                         |             |
+                         | Linux NVA   |
+                         | 10.0.1.4    |
+                         +---+-----+---+
+                             |     |
+                  Peering + UDR   Peering + UDR
+                             |     |
+              +--------------+     +--------------+
+              |                                   |
+       +------v---------+                  +------v----------+
+       | App Spoke      |                  | Data Spoke      |
+       | 10.10.0.0/16   |                  | 10.20.0.0/16    |
+       |                |                  |                 |
+       | vm-web01       | -- TCP/8080 -->  | vm-db01         |
+       | ASG: asg-app   |   via NVA        | ASG: asg-data   |
+       +----------------+                  +-----------------+
+```
 
-| Network | Address space | Purpose |
+### Network layout
+
+| Component | Address space | Purpose |
 |---|---:|---|
-| `vnet-hub` | `10.0.0.0/16` | Shared services, Bastion and NVA |
-| `vnet-spoke-app` | `10.10.0.0/16` | Application workload |
-| `vnet-spoke-data` | `10.20.0.0/16` | Data workload |
+| Hub VNet | `10.0.0.0/16` | Shared services and transit |
+| AzureBastionSubnet | `10.0.0.0/26` | Central administrative access |
+| NVA subnet | `10.0.1.0/24` | Linux network virtual appliance |
+| App Spoke | `10.10.0.0/16` | Application workload |
+| App subnet | `10.10.1.0/24` | `vm-web01` |
+| Data Spoke | `10.20.0.0/16` | Data workload |
+| Data subnet | `10.20.1.0/24` | `vm-db01` |
+
+## Implemented capabilities
+
+### Networking
+
+- Hub-and-spoke topology with four VNet peerings
+- Linux NVA with NIC IP forwarding and OS-level forwarding
+- User-defined routes for App-to-Data and Data-to-App traffic through the NVA
+- Private workload VMs without public IP addresses
+- Central Azure Bastion in the hub
+
+### Security and identity
+
+- NSGs for App, Data and NVA subnets
+- ASG-based App-to-Data rule on TCP/8080
+- Explicit SSH allow rules from Azure Bastion
+- Explicit deny rules for SSH from all other sources
+- Microsoft Entra ID SSH extension on all Linux VMs
+- Explicit principal assignment for `Virtual Machine Administrator Login`
 
-### Subnets
+### Observability
 
-| Subnet | Prefix | Workload |
-|---|---:|---|
-| `AzureBastionSubnet` | `10.0.0.0/26` | Azure Bastion |
-| `snet-nva` | `10.0.1.0/24` | `vm-nva01` |
-| `snet-app` | `10.10.1.0/24` | `vm-web01` |
-| `snet-data` | `10.20.1.0/24` | `vm-db01` |
+- Azure Network Watcher integration
+- Subnet Flow Logs v2 for App and Data
+- Traffic Analytics
+- Log Analytics Workspace
+- Dedicated Storage Account for flow-log data
 
-### Traffic and security design
+### Terraform state
 
-- Hub-to-spoke and spoke-to-hub peerings allow forwarded traffic.
-- UDRs send app-to-data and data-to-app traffic to the NVA private IP.
-- IP forwarding is enabled on the NVA NIC and inside the Linux guest.
-- SSH is allowed only from `AzureBastionSubnet`; lower-priority rules deny SSH from other sources.
-- Application traffic to the data workload is limited to TCP/8080 using `asg-app` as source and `asg-data` as destination.
-- No workload VM has a public IP address.
-- Microsoft Entra SSH access is assigned to the explicit `vm_admin_principal_id`; it is not implicitly tied to the identity running Terraform.
+The backend is managed separately under:
 
----
+```text
+bootstrap/terraform-backend/
+```
 
-## Observability Setup
+It creates:
 
-Subnet Flow Logs v2 are enabled for:
+- a dedicated resource group
+- an Azure Storage Account
+- a private Blob container
+- RBAC access using `Storage Blob Data Contributor`
 
-- `snet-app`
-- `snet-data`
+The workload can therefore be destroyed without deleting its remote state infrastructure.
 
-Flow logs are written to a dedicated workload storage account and connected to Traffic Analytics and Log Analytics. KQL can be used to validate allowed and denied flows.
+## Repository structure
 
-No raw JSON, state files or CLI dumps are published in this repository.
+```text
+.
+├── bootstrap/terraform-backend/   # Separate backend bootstrap stack
+├── backend.tf                     # AzureRM backend declaration
+├── backend.hcl.example            # Example backend configuration
+├── network.tf                     # VNets, subnets and peerings
+├── routing.tf                     # Route tables, routes and associations
+├── nva.tf                         # Linux NVA configuration
+├── bastion.tf                     # Azure Bastion and public IP
+├── compute.tf                     # Workload VMs and NICs
+├── entra_id.tf                    # Entra SSH and VM login RBAC
+├── asg.tf                         # Application Security Groups
+├── nsg_app.tf                     # App NSG rules
+├── nsg_data.tf                    # Data NSG rules
+├── nsg_nva.tf                     # NVA NSG rules
+├── observability.tf               # Flow Logs and Log Analytics
+├── locals.tf                      # Shared maps and naming data
+├── variables.tf                   # Root input variables
+└── outputs.tf                     # Useful deployment outputs
+```
 
----
+## Prerequisites
 
-## Historical Validation Run – 2026-02-13
+- Terraform compatible with the version constraint in `versions.tf`
+- Azure CLI
+- An Azure subscription
+- Permission to create the required Azure resources and role assignments
+- An SSH public key
 
-> [!IMPORTANT]
-> The screenshots below document the earlier v1.0 single-VNet validation run. The current code has since evolved to the hub-and-spoke architecture described above.
+## Usage
 
-Screenshots are stored under:
+### 1. Bootstrap the remote backend
 
-`proofs/docs-proofs/run-2026-02-13_075327/screens/`
+Create a local file from the example:
 
----
+```powershell
+Copy-Item .\bootstrap\terraform-backend\terraform.tfvars.example `
+  .\bootstrap\terraform-backend\terraform.tfvars
+```
 
-### 1) Deployment completed
+Set the Entra object ID that should receive backend access:
 
-Terraform apply completed successfully.
+```hcl
+backend_operator_principal_id = "00000000-0000-0000-0000-000000000000"
+```
 
-![01_apply_complete](proofs/docs-proofs/run-2026-02-13_075327/screens/01_apply_complete.png)
+Then run:
 
-Resource Group overview:
+```powershell
+Push-Location .\bootstrap\terraform-backend
+terraform init
+terraform plan
+terraform apply
+Pop-Location
+```
 
-![02_rg_overview](proofs/docs-proofs/run-2026-02-13_075327/screens/02_rg_overview.png)
+### 2. Configure the workload backend
 
----
+Create a local backend configuration from:
 
-### 2) Bastion SSH access
+```text
+backend.hcl.example
+```
 
-Bastion used to access vm-web01.
+Initialize the root stack:
 
-![03_bastion_connect_form](proofs/docs-proofs/run-2026-02-13_075327/screens/03_bastion_connect_form.png)
+```powershell
+terraform init -backend-config=backend.hcl
+```
 
-Hostname confirmation:
+### 3. Configure workload variables
 
-![04_bastion_ssh_hostname](proofs/docs-proofs/run-2026-02-13_075327/screens/04_bastion_ssh_hostname.png)
+Create `terraform.tfvars` from `terraform.tfvars.example` and set at least:
 
----
+```hcl
+ssh_public_key      = "ssh-ed25519 AAAA..."
+vm_admin_principal_id = "00000000-0000-0000-0000-000000000000"
+```
 
-### 3) Allowed traffic test (8080)
+### 4. Validate and plan
 
-Simple HTTP server running on db VM:
+```powershell
+terraform fmt -check -recursive
+terraform validate
+terraform plan
+```
 
-![05b_db_httpserver_8080](proofs/docs-proofs/run-2026-02-13_075327/screens/05b_db_httpserver_8080.png)
+### 5. Deploy or destroy the workload
 
-curl requests from web → db on port 8080:
+```powershell
+terraform apply
+terraform destroy
+```
 
-![05_allowed_8080_curl](proofs/docs-proofs/run-2026-02-13_075327/screens/05_allowed_8080_curl.png)
+Run workload commands only from the repository root. Do not run `destroy` inside `bootstrap/terraform-backend` unless the backend itself should be removed.
 
-Expected result: traffic allowed by NSG rule.
+## Validation completed
 
----
+The following lifecycle has been tested:
 
-### 4) Denied traffic test (3389)
+```text
+bootstrap backend
+      -> workload deploy
+      -> connectivity and logging validation
+      -> workload destroy
+      -> backend retained
+      -> clean rebuild plan
+```
 
-nc connection attempts from web → db on port 3389:
+Latest verified rebuild plan:
 
-![06_denied_3389_nc](proofs/docs-proofs/run-2026-02-13_075327/screens/06_denied_3389_nc.png)
+```text
+Plan: 54 to add, 0 to change, 0 to destroy.
+```
 
-Expected result: inbound traffic denied by NSG rule.
+## Security notes
 
----
+The current implementation already uses private containers, Entra ID/RBAC access, TLS 1.2 and private workload VMs. Further backend hardening for a production environment could include:
 
-### 5) Flow Logs enabled
+- Blob versioning and soft delete
+- Storage firewall rules or a Private Endpoint
+- ZRS or GRS according to recovery requirements
+- Resource Lock or another explicit deletion-protection strategy
 
-Flow logs enabled on subnet-web:
+Public network access must be designed together with the future GitHub Actions runner model. Disabling it without private runner connectivity would prevent hosted runners from reaching the backend.
 
-![07_flowlog_subnet_web_enabled](proofs/docs-proofs/run-2026-02-13_075327/screens/07_flowlog_subnet_web_enabled.png)
+## Roadmap
 
-Flow logs enabled on subnet-db:
+### v1.1 — Completed
 
-![08_flowlog_subnet_db_enabled](proofs/docs-proofs/run-2026-02-13_075327/screens/08_flowlog_subnet_db_enabled.png)
+- Remote Terraform state
+- Hub-and-spoke topology
+- Central Bastion
+- Linux NVA and UDR routing
+- Entra ID SSH
+- NSG and ASG segmentation
+- Flow Logs and Log Analytics
+- Reproducible deploy/destroy lifecycle
 
----
+### v1.2 — Next
 
-### 6) Log ingestion verified
-
-Log Analytics query view:
-
-![09_law_logs_view](proofs/docs-proofs/run-2026-02-13_075327/screens/09_law_logs_view.png)
-
-Sample NTA data:
-
-![10_kql_ntanetanalytics_take50](proofs/docs-proofs/run-2026-02-13_075327/screens/10_kql_ntanetanalytics_take50.png)
-
----
-
-### 7) KQL validation
-
-FlowStatus distribution:
-
-![11d_kql_flowstatus_values](proofs/docs-proofs/run-2026-02-13_075327/screens/11d_kql_flowstatus_values.png)
-
-Allowed vs Denied summary:
-
-![12_kql_allowed_denied_summary](proofs/docs-proofs/run-2026-02-13_075327/screens/12_kql_allowed_denied_summary.png)
-
-Port-level summary (8080 vs 3389):
-
-![13_kql_ports_8080_3389_summary](proofs/docs-proofs/run-2026-02-13_075327/screens/13_kql_ports_8080_3389_summary.png)
-
-3389 direction detail:
-
-![17_kql_3389_direction_detail](proofs/docs-proofs/run-2026-02-13_075327/screens/17_kql_3389_direction_detail.png)
-
-8080 direction detail:
-
-![18_kql_8080_direction_detail](proofs/docs-proofs/run-2026-02-13_075327/screens/18_kql_8080_direction_detail.png)
-
----
-
-### 8) Cleanup
-
-Environment destroyed using Terraform.
-
-![19_terraform_destroy_complete](proofs/docs-proofs/run-2026-02-13_075327/screens/19_terraform_destroy_complete.png)
-
----
-
-## Notes
-
-- Raw Terraform/CLI outputs are not published.
-- Manual redaction of JSON outputs was tested and discarded due to risk of incomplete sanitization.
-
----
-
-## Evidence Strategy & Pivot
-
-Initial approach:
-- Terraform / Azure CLI JSON outputs
-- Automated redaction via PowerShell script
-- Publishing sanitized audit dumps
-
-Issue:
-- Regex-based redaction was not fully reliable.
-- Sensitive fragments (e.g. SSH key material) could remain partially visible.
-- Manual verification effort too high to guarantee safety.
-
-Decision:
-- No raw dumps are published.
-- Only platform-generated evidence is used:
-  - Azure Portal views
-  - Flow Log configuration
-  - Log Analytics (KQL) results
-
----
-
-## Roadmap & Milestones
-
-Legend:
-- ✅ Completed
-- 🔄 In Progress
-- ⏳ Planned
-
-### v1.0 — Networking + Observability Evidence
-
-Status: ✅ Completed
-
-Scope:
-- Private Linux VMs
-- Azure Bastion
-- NSGs and ASGs
-- Subnet Flow Logs v2, Log Analytics and KQL validation
-- Full deploy, verify and destroy lifecycle
-
-Evidence:
-- Historical screenshots referenced above
-
----
-
-### v1.1 — Remote Terraform State + Hub-Spoke Refactor
-
-Status: ✅ Completed
-
-Implemented:
-- Dedicated bootstrap stack for the backend resource group, storage account and private container
-- Azure Blob backend with lease-based state locking
-- Azure AD authentication and RBAC-based blob access
-- Separation between backend infrastructure and workload infrastructure
-- Hub-and-spoke topology with shared Bastion and NVA
-- Bidirectional peerings with forwarded traffic
-- UDRs and virtual-appliance next hops
-- Explicit identity variables for stable RBAC ownership
-- Successful full workload destroy while retaining the remote backend
-
----
-
-### v1.2 — CI/CD + DevSecOps (GitHub Actions, OIDC and Checkov)
-
-Status: 🔄 In Progress
-
-Planned:
-- `terraform fmt -check -recursive` and `terraform validate` on push and pull requests
-- Checkov static analysis as a blocking security gate
-- Secretless GitHub-to-Azure authentication through OIDC
+- GitHub Actions CI
+- `terraform fmt` and `terraform validate`
+- Checkov security scanning
+- Azure authentication through OIDC
 - Terraform plan on pull requests
-- Manual apply through `workflow_dispatch`
-- GitHub Environment approval before apply
-- Minimal Azure RBAC at the required scope
-- Separate plan and apply jobs
+- Manual apply with GitHub Environment approval
 
-Technical focus:
-- Secretless authentication
-- Stable, explicitly configured deployment identities
-- Controlled deployment flow
-- Reproducible CI execution
-- Documented handling of justified lab exceptions
+### Possible later extensions
+
+- NAT Gateway for deterministic outbound connectivity
+- Private Endpoint and Private DNS
+- Load Balancer with multiple App VMs
+- KQL dashboards and automated smoke tests
+- Azure Firewall as a managed replacement for the Linux NVA
+
+## License
+
+See [LICENSE](LICENSE).
