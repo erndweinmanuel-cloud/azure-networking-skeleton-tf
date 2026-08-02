@@ -17,7 +17,6 @@ resource "azurerm_virtual_machine_extension" "entra_ssh_login" {
   type                       = "AADSSHLoginForLinux"
   type_handler_version       = "1.0"
   auto_upgrade_minor_version = true
-  automatic_upgrade_enabled  = true
 }
 
 resource "azurerm_role_assignment" "vm_administrator_login" {
