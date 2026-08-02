@@ -10,12 +10,6 @@ variable "location" {
   default     = "westeurope"
 }
 
-variable "vnet_name" {
-  type        = string
-  description = "Name of the Azure virtual network."
-  default     = "vnet-main"
-}
-
 variable "admin_username" {
   type        = string
   description = "Administrator username for the Linux virtual machines."
@@ -37,4 +31,16 @@ variable "ssh_public_key" {
 
     error_message = "ssh_public_key must contain a valid OpenSSH public key."
   }
+}
+
+variable "environment" {
+  type        = string
+  description = "Deployment environment used for tagging and naming."
+  default     = "lab"
+}
+
+variable "project_name" {
+  type        = string
+  description = "Project name used for tagging and resource identification."
+  default     = "azure-networking-skeleton"
 }
