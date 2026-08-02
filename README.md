@@ -1,66 +1,73 @@
 # Azure Networking Skeleton (Terraform)
 
-Terraform-based Azure networking setup with:
+Terraform-based Azure hub-and-spoke networking lab with:
 
-- Private Linux VMs (no public IPs)
-- Azure Bastion for SSH access
-- NSGs attached at subnet level
-- Application Security Groups (web/db separation)
-- Subnet Flow Logs (v2)
-- Log Analytics + KQL validation
-- Full deploy → verify → destroy lifecycle
+- Dedicated hub plus application and data spokes
+- Azure Bastion as a shared management service in the hub
+- Linux NVA with IP forwarding for spoke-to-spoke transit
+- UDRs that force application/data traffic through the NVA
+- Private Linux VMs with no public IP addresses
+- Subnet-level NSGs and App/Data Application Security Groups
+- Microsoft Entra SSH login with explicit RBAC assignment
+- Subnet Flow Logs v2, Traffic Analytics and Log Analytics
+- Dedicated Azure Blob backend with state locking and RBAC
+- Full deploy, validate and destroy lifecycle
 
-Region: westeurope
+Region: `westeurope`
 
 ---
 
-## Network Design Overview
+## Current Architecture
 
 > [!NOTE]
-> This repository is intentionally designed as a networking skeleton and learning environment, not as a complete production landing zone.
->
-> The current virtual network represents the foundation of a future spoke network. In a later architecture version, it will be connected to a central hub as part of a hub-and-spoke topology.
->
-> Azure Bastion is currently deployed inside this VNet to keep the repository independently deployable and fully testable. In the future hub-and-spoke design, Azure Bastion will be moved to the central hub and shared with the connected spokes.
+> This repository is a portfolio and learning environment, not a complete production landing zone. The architecture demonstrates separation of concerns, controlled transit, shared services and repeatable Infrastructure as Code.
 
-Virtual Network: `10.0.0.0/16`
+### Address spaces
 
-Subnets:
+| Network | Address space | Purpose |
+|---|---:|---|
+| `vnet-hub` | `10.0.0.0/16` | Shared services, Bastion and NVA |
+| `vnet-spoke-app` | `10.10.0.0/16` | Application workload |
+| `vnet-spoke-data` | `10.20.0.0/16` | Data workload |
 
-- `subnet-web` → 10.0.1.0/24 → `vm-web01`
-- `subnet-db`  → 10.0.2.0/24 → `vm-db01`
-- `AzureBastionSubnet` → 10.0.10.0/26 → Bastion
+### Subnets
 
-Design decisions:
+| Subnet | Prefix | Workload |
+|---|---:|---|
+| `AzureBastionSubnet` | `10.0.0.0/26` | Azure Bastion |
+| `snet-nva` | `10.0.1.0/24` | `vm-nva01` |
+| `snet-app` | `10.10.1.0/24` | `vm-web01` |
+| `snet-data` | `10.20.1.0/24` | `vm-db01` |
 
-- No VM has a Public IP
-- SSH access only via Azure Bastion
-- NSGs attached at subnet scope
-- Explicit deny rules for SSH/RDP from non-Bastion sources
-- App traffic rule: web → db on port 8080 (via ASGs)
+### Traffic and security design
+
+- Hub-to-spoke and spoke-to-hub peerings allow forwarded traffic.
+- UDRs send app-to-data and data-to-app traffic to the NVA private IP.
+- IP forwarding is enabled on the NVA NIC and inside the Linux guest.
+- SSH is allowed only from `AzureBastionSubnet`; lower-priority rules deny SSH from other sources.
+- Application traffic to the data workload is limited to TCP/8080 using `asg-app` as source and `asg-data` as destination.
+- No workload VM has a public IP address.
+- Microsoft Entra SSH access is assigned to the explicit `vm_admin_principal_id`; it is not implicitly tied to the identity running Terraform.
 
 ---
 
 ## Observability Setup
 
-Subnet Flow Logs (v2) enabled for:
+Subnet Flow Logs v2 are enabled for:
 
-- subnet-web
-- subnet-db
+- `snet-app`
+- `snet-data`
 
-Flow logs are sent to:
+Flow logs are written to a dedicated workload storage account and connected to Traffic Analytics and Log Analytics. KQL can be used to validate allowed and denied flows.
 
-- Storage Account
-- Traffic Analytics
-- Log Analytics Workspace
-
-Validation is performed using KQL queries in Log Analytics.
-
-No raw JSON or CLI dumps are published in this repository.
+No raw JSON, state files or CLI dumps are published in this repository.
 
 ---
 
-## Validation Run – 2026-02-13
+## Historical Validation Run – 2026-02-13
+
+> [!IMPORTANT]
+> The screenshots below document the earlier v1.0 single-VNet validation run. The current code has since evolved to the hub-and-spoke architecture described above.
 
 Screenshots are stored under:
 
@@ -207,87 +214,56 @@ Legend:
 - 🔄 In Progress
 - ⏳ Planned
 
-
-### v1.0 — Networking + Observability Evidence (current)
+### v1.0 — Networking + Observability Evidence
 
 Status: ✅ Completed
 
 Scope:
-- Private Linux VMs (no public IPs)
-- Azure Bastion for SSH
-- NSGs at subnet scope + ASGs (web/db separation)
-- Subnet Flow Logs (v2) + Log Analytics + KQL validation
-- Full deploy → verify → destroy lifecycle
+- Private Linux VMs
+- Azure Bastion
+- NSGs and ASGs
+- Subnet Flow Logs v2, Log Analytics and KQL validation
+- Full deploy, verify and destroy lifecycle
 
 Evidence:
-- proofs/docs-proofs/run-2026-02-13_075327/screens/
+- Historical screenshots referenced above
 
 ---
 
-### v1.1 — Remote Terraform State (Azure Backend)
+### v1.1 — Remote Terraform State + Hub-Spoke Refactor
+
+Status: ✅ Completed
+
+Implemented:
+- Dedicated bootstrap stack for the backend resource group, storage account and private container
+- Azure Blob backend with lease-based state locking
+- Azure AD authentication and RBAC-based blob access
+- Separation between backend infrastructure and workload infrastructure
+- Hub-and-spoke topology with shared Bastion and NVA
+- Bidirectional peerings with forwarded traffic
+- UDRs and virtual-appliance next hops
+- Explicit identity variables for stable RBAC ownership
+- Successful full workload destroy while retaining the remote backend
+
+---
+
+### v1.2 — CI/CD + DevSecOps (GitHub Actions, OIDC and Checkov)
 
 Status: 🔄 In Progress
 
-Goal:
-Move Terraform state from local files to a remote backend to make this repository team-ready and CI-compatible.
-
 Planned:
-- Dedicated Storage Account for Terraform state
-- Private Blob container for state file
-- `backend "azurerm"` configuration in separate `backend.tf`
-- Backend configuration decoupled from main infrastructure code
-- No hardcoded subscription / resource identifiers in backend block
-- `terraform init -migrate-state` to move local state
-- Local `.tfstate` files fully removed
-- State locking enabled (Azure Blob lease mechanism)
-- Backend access restricted via RBAC
+- `terraform fmt -check -recursive` and `terraform validate` on push and pull requests
+- Checkov static analysis as a blocking security gate
+- Secretless GitHub-to-Azure authentication through OIDC
+- Terraform plan on pull requests
+- Manual apply through `workflow_dispatch`
+- GitHub Environment approval before apply
+- Minimal Azure RBAC at the required scope
+- Separate plan and apply jobs
 
-Technical Focus:
-- Separation of concerns (state infra vs workload infra)
-- Secure backend configuration
-- Reproducible initialization process
-
-Evidence (to add when completed):
-- Storage Account + container configuration
-- Successful state migration proof
-- Confirmation that local state no longer exists
-- Lock test (parallel run prevention)
-
----
-
-
-### v1.2 — CI/CD Pipeline (GitHub Actions + OIDC)
-
-Status: ⏳ Planned
-
-Goal:
-Execute Terraform in a controlled pipeline using federated identity and minimal permissions. No stored secrets.
-
-Planned:
-- GitHub Actions workflow:
-  - `terraform fmt` and `terraform validate` on push/PR
-  - `terraform plan` on PR
-  - `terraform apply` only via `workflow_dispatch`
-- OIDC authentication (GitHub → Azure)
-- Federated Credential in Azure (no client secret)
-- No secrets stored in repository
-- Minimal RBAC (Contributor at Resource Group scope)
-- No Owner role assigned
-- Principle of Least Privilege enforced
-- GitHub Environments approval gate before apply
-- Separate plan and apply stages
-
-Technical Focus:
+Technical focus:
 - Secretless authentication
+- Stable, explicitly configured deployment identities
 - Controlled deployment flow
-- Environment separation
 - Reproducible CI execution
-
-Evidence (to add when completed):
-- Workflow run proof (plan stage)
-- Apply approval gate proof
-- Federated credential configuration in Azure
-- RBAC scope proof (RG-level, no Owner)
-
-
-
+- Documented handling of justified lab exceptions

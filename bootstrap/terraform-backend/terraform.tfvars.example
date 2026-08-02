@@ -9,3 +9,4 @@ tags = {
   managed_by  = "terraform"
   purpose     = "terraform-state"
 }
+backend_operator_principal_id = "00000000-0000-0000-0000-000000000000"

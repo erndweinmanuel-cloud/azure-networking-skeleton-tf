@@ -33,6 +33,17 @@ variable "ssh_public_key" {
   }
 }
 
+
+variable "vm_admin_principal_id" {
+  type        = string
+  description = "Microsoft Entra object ID that receives Virtual Machine Administrator Login on the workload resource group."
+
+  validation {
+    condition     = can(regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", var.vm_admin_principal_id))
+    error_message = "vm_admin_principal_id must be a valid Microsoft Entra object ID (UUID)."
+  }
+}
+
 variable "environment" {
   type        = string
   description = "Deployment environment used for tagging and naming."

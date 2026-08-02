@@ -76,6 +76,10 @@ locals {
   }
 
   application_security_groups = {
+    app = {
+      name = "asg-app"
+    }
+
     data = {
       name = "asg-data"
     }

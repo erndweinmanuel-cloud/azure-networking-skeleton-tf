@@ -43,3 +43,12 @@ variable "tags" {
     purpose     = "terraform-state"
   }
 }
+variable "backend_operator_principal_id" {
+  type        = string
+  description = "Microsoft Entra object ID that receives Storage Blob Data Contributor on the Terraform backend storage account."
+
+  validation {
+    condition     = can(regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", var.backend_operator_principal_id))
+    error_message = "backend_operator_principal_id must be a valid Microsoft Entra object ID (UUID)."
+  }
+}

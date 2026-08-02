@@ -17,7 +17,9 @@ resource "azurerm_network_security_rule" "allow_8080_web_to_db" {
   source_port_range      = "*"
   destination_port_range = "8080"
 
-  source_address_prefix = azurerm_subnet.this["app_workload"].address_prefixes[0]
+  source_application_security_group_ids = [
+    azurerm_application_security_group.this["app"].id
+  ]
 
   destination_application_security_group_ids = [
     azurerm_application_security_group.this["data"].id
