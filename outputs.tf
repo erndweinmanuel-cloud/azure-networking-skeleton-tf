@@ -2,8 +2,8 @@ output "private_ips" {
   description = "Private IP addresses of the workload virtual machines."
 
   value = {
-    app  = azurerm_network_interface.nic_web.private_ip_address
-    data = azurerm_network_interface.nic_db.private_ip_address
+    for key, nic in azurerm_network_interface.workload :
+    key => nic.private_ip_address
   }
 }
 

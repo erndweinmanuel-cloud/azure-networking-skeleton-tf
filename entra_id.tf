@@ -1,11 +1,15 @@
 data "azurerm_client_config" "current" {}
 
 locals {
-  entra_login_vms = {
-    app  = azurerm_linux_virtual_machine.vm_web.id
-    data = azurerm_linux_virtual_machine.vm_db.id
-    nva  = azurerm_linux_virtual_machine.vm_nva.id
-  }
+  entra_login_vms = merge(
+    {
+      for key, vm in azurerm_linux_virtual_machine.workload :
+      key => vm.id
+    },
+    {
+      nva = azurerm_linux_virtual_machine.vm_nva.id
+    }
+  )
 }
 
 resource "azurerm_virtual_machine_extension" "entra_ssh_login" {

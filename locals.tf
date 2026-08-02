@@ -81,6 +81,23 @@ locals {
     }
   }
 
+  workload_vms = {
+    app = {
+      vm_name    = "vm-web01"
+      nic_name   = "nic-web"
+      ipconfig   = "ipconfig-web"
+      subnet_key = "app_workload"
+      vm_size    = "Standard_B2s"
+    }
+
+    data = {
+      vm_name    = "vm-db01"
+      nic_name   = "nic-db"
+      ipconfig   = "ipconfig-db"
+      subnet_key = "data_workload"
+      vm_size    = "Standard_B2s"
+    }
+  }
   flow_log_targets = {
     app = {
       name       = "flowlog-snet-app"
