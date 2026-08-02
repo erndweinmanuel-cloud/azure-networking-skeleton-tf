@@ -10,11 +10,6 @@ resource "azurerm_application_security_group" "this" {
 
 resource "azurerm_network_interface_application_security_group_association" "this" {
   for_each = {
-    app = {
-      network_interface_id = azurerm_network_interface.nic_web.id
-      asg_key              = "app"
-    }
-
     data = {
       network_interface_id = azurerm_network_interface.nic_db.id
       asg_key              = "data"

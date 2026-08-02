@@ -10,12 +10,6 @@ variable "location" {
   default     = "westeurope"
 }
 
-variable "vnet_name" {
-  type        = string
-  description = "Name of the Azure virtual network."
-  default     = "vnet-main"
-}
-
 variable "admin_username" {
   type        = string
   description = "Administrator username for the Linux virtual machines."

@@ -28,28 +28,24 @@ locals {
       name             = "AzureBastionSubnet"
       virtual_network  = "hub"
       address_prefixes = ["10.0.0.0/26"]
-      role             = "bastion"
     }
 
     hub_nva = {
       name             = "snet-nva"
       virtual_network  = "hub"
       address_prefixes = ["10.0.1.0/24"]
-      role             = "nva"
     }
 
     app_workload = {
       name             = "snet-app"
       virtual_network  = "app"
       address_prefixes = ["10.10.1.0/24"]
-      role             = "app"
     }
 
     data_workload = {
       name             = "snet-data"
       virtual_network  = "data"
       address_prefixes = ["10.20.1.0/24"]
-      role             = "data"
     }
   }
 
@@ -80,10 +76,6 @@ locals {
   }
 
   application_security_groups = {
-    app = {
-      name = "asg-app"
-    }
-
     data = {
       name = "asg-data"
     }
