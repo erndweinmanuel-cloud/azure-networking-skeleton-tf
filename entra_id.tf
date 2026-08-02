@@ -1,0 +1,27 @@
+data "azurerm_client_config" "current" {}
+
+locals {
+  entra_login_vms = {
+    app  = azurerm_linux_virtual_machine.vm_web.id
+    data = azurerm_linux_virtual_machine.vm_db.id
+    nva  = azurerm_linux_virtual_machine.vm_nva.id
+  }
+}
+
+resource "azurerm_virtual_machine_extension" "entra_ssh_login" {
+  for_each = local.entra_login_vms
+
+  name                       = "AADSSHLoginForLinux"
+  virtual_machine_id         = each.value
+  publisher                  = "Microsoft.Azure.ActiveDirectory"
+  type                       = "AADSSHLoginForLinux"
+  type_handler_version       = "1.0"
+  auto_upgrade_minor_version = true
+  automatic_upgrade_enabled  = true
+}
+
+resource "azurerm_role_assignment" "vm_administrator_login" {
+  scope                = azurerm_resource_group.rg.id
+  role_definition_name = "Virtual Machine Administrator Login"
+  principal_id         = data.azurerm_client_config.current.object_id
+}
