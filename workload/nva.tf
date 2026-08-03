@@ -16,6 +16,7 @@ resource "azurerm_network_interface" "nic_nva" {
 }
 
 resource "azurerm_linux_virtual_machine" "vm_nva" {
+  # checkov:skip=CKV_AZURE_50:AADSSHLoginForLinux is intentionally required for passwordless Microsoft Entra ID SSH authentication.
   identity {
     type = "SystemAssigned"
   }

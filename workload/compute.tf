@@ -15,6 +15,7 @@ resource "azurerm_network_interface" "workload" {
 }
 
 resource "azurerm_linux_virtual_machine" "workload" {
+  # checkov:skip=CKV_AZURE_50:AADSSHLoginForLinux is intentionally required for passwordless Microsoft Entra ID SSH authentication.
   for_each = local.workload_vms
 
   name                  = each.value.vm_name
