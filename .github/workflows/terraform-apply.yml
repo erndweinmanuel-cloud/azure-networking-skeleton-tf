@@ -1,0 +1,68 @@
+name: Terraform Apply
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  ARM_USE_OIDC: true
+  ARM_USE_AZUREAD: true
+  ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+  TF_VAR_ssh_public_key: ${{ vars.SSH_PUBLIC_KEY }}
+  TF_VAR_vm_admin_principal_id: ${{ vars.VM_ADMIN_PRINCIPAL_ID }}
+
+jobs:
+  terraform-apply:
+    name: Terraform apply
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.14.2
+          terraform_wrapper: false
+
+      - name: Azure login with OIDC
+        uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Initialize workload with remote backend
+        working-directory: workload
+        run: |
+          terraform init \
+            -reconfigure \
+            -backend-config="resource_group_name=rg-tfstate-networking" \
+            -backend-config="storage_account_name=sttfnetworkingfws4kc" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=networking.terraform.tfstate"
+
+      - name: Validate workload
+        working-directory: workload
+        run: terraform validate
+
+      - name: Create Terraform plan
+        working-directory: workload
+        run: |
+          terraform plan \
+            -input=false \
+            -lock-timeout=5m \
+            -out=tfplan
+
+      - name: Apply Terraform plan
+        working-directory: workload
+        run: terraform apply -input=false tfplan
