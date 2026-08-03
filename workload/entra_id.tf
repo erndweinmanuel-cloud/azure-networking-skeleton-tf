@@ -13,6 +13,7 @@ locals {
 }
 
 resource "azurerm_virtual_machine_extension" "entra_ssh_login" {
+  # checkov:skip=CKV_AZURE_50:AADSSHLoginForLinux is intentionally required for passwordless Microsoft Entra ID SSH authentication.
   for_each = local.entra_login_vms
 
   name                       = "AADSSHLoginForLinux"

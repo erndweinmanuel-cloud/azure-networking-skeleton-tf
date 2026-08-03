@@ -1,0 +1,101 @@
+name: Terraform CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "workload/**"
+      - "bootstrap/terraform-backend/**"
+      - ".github/workflows/terraform-ci.yml"
+
+  push:
+    branches:
+      - feature/terraform-cicd
+    paths:
+      - "workload/**"
+      - "bootstrap/terraform-backend/**"
+      - ".github/workflows/terraform-ci.yml"
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  ARM_USE_OIDC: true
+  ARM_USE_AZUREAD: true
+  ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+  TF_VAR_ssh_public_key: ${{ vars.SSH_PUBLIC_KEY }}
+  TF_VAR_vm_admin_principal_id: ${{ vars.VM_ADMIN_PRINCIPAL_ID }}
+
+jobs:
+  terraform-checks:
+    name: Terraform checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.14.2
+          terraform_wrapper: false
+
+      - name: Azure login with OIDC
+        uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Verify Azure identity
+        run: |
+          az account show \
+            --query "{subscription:name,subscriptionId:id,tenantId:tenantId,user:user.name}" \
+            --output table
+
+      - name: Terraform format check
+        run: terraform fmt -check -recursive
+
+      - name: Initialize workload with remote backend
+        working-directory: workload
+        run: |
+          terraform init \
+            -reconfigure \
+            -backend-config="resource_group_name=rg-tfstate-networking" \
+            -backend-config="storage_account_name=sttfnetworkingfws4kc" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=networking.terraform.tfstate"
+
+      - name: Validate workload
+        working-directory: workload
+        run: terraform validate
+
+      - name: Terraform plan
+        working-directory: workload
+        run: |
+          terraform plan \
+            -input=false \
+            -lock-timeout=5m \
+            -out=tfplan
+
+      - name: Initialize backend bootstrap without backend
+        working-directory: bootstrap/terraform-backend
+        run: terraform init -backend=false
+
+      - name: Validate backend bootstrap
+        working-directory: bootstrap/terraform-backend
+        run: terraform validate
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: terraform
+          quiet: true
+          soft_fail: false
+          skip_check: CKV2_AZURE_21
