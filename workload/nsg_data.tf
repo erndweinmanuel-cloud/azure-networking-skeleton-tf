@@ -1,7 +1,7 @@
 resource "azurerm_network_security_group" "nsg_db" {
   name                = "nsg-data"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.workload.location
+  resource_group_name = data.azurerm_resource_group.workload.name
 
   tags = local.common_tags
 }
@@ -25,7 +25,7 @@ resource "azurerm_network_security_rule" "allow_8080_web_to_db" {
     azurerm_application_security_group.this["data"].id
   ]
 
-  resource_group_name         = azurerm_resource_group.rg.name
+  resource_group_name         = data.azurerm_resource_group.workload.name
   network_security_group_name = azurerm_network_security_group.nsg_db.name
 }
 
@@ -46,7 +46,7 @@ resource "azurerm_network_security_rule" "allow_ssh_to_db_from_bastion" {
     azurerm_application_security_group.this["data"].id
   ]
 
-  resource_group_name         = azurerm_resource_group.rg.name
+  resource_group_name         = data.azurerm_resource_group.workload.name
   network_security_group_name = azurerm_network_security_group.nsg_db.name
 }
 
@@ -64,7 +64,7 @@ resource "azurerm_network_security_rule" "deny_ssh_inbound_db" {
   source_address_prefix      = "*"
   destination_address_prefix = "*"
 
-  resource_group_name         = azurerm_resource_group.rg.name
+  resource_group_name         = data.azurerm_resource_group.workload.name
   network_security_group_name = azurerm_network_security_group.nsg_db.name
 }
 

@@ -1,7 +1,7 @@
 resource "azurerm_network_security_group" "nsg_web" {
   name                = "nsg-app"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.workload.location
+  resource_group_name = data.azurerm_resource_group.workload.name
 
   tags = local.common_tags
 }
@@ -23,7 +23,7 @@ resource "azurerm_network_security_rule" "allow_ssh_to_web_from_bastion" {
     azurerm_application_security_group.this["app"].id
   ]
 
-  resource_group_name         = azurerm_resource_group.rg.name
+  resource_group_name         = data.azurerm_resource_group.workload.name
   network_security_group_name = azurerm_network_security_group.nsg_web.name
 }
 
@@ -41,7 +41,7 @@ resource "azurerm_network_security_rule" "deny_ssh_inbound_web" {
   source_address_prefix      = "*"
   destination_address_prefix = "*"
 
-  resource_group_name         = azurerm_resource_group.rg.name
+  resource_group_name         = data.azurerm_resource_group.workload.name
   network_security_group_name = azurerm_network_security_group.nsg_web.name
 }
 

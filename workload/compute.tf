@@ -2,8 +2,8 @@ resource "azurerm_network_interface" "workload" {
   for_each = local.workload_vms
 
   name                = each.value.nic_name
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.workload.location
+  resource_group_name = data.azurerm_resource_group.workload.name
 
   ip_configuration {
     name                          = each.value.ipconfig
@@ -19,8 +19,8 @@ resource "azurerm_linux_virtual_machine" "workload" {
   for_each = local.workload_vms
 
   name                  = each.value.vm_name
-  location              = azurerm_resource_group.rg.location
-  resource_group_name   = azurerm_resource_group.rg.name
+  location              = data.azurerm_resource_group.workload.location
+  resource_group_name   = data.azurerm_resource_group.workload.name
   size                  = each.value.vm_size
   admin_username        = var.admin_username
   network_interface_ids = [azurerm_network_interface.workload[each.key].id]

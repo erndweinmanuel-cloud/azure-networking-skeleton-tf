@@ -14,7 +14,7 @@ output "bastion_public_ip" {
 
 output "resource_group_name" {
   description = "Name of the workload resource group."
-  value       = azurerm_resource_group.rg.name
+  value       = data.azurerm_resource_group.workload.name
 }
 
 output "virtual_network_ids" {

@@ -1,15 +1,12 @@
-resource "azurerm_resource_group" "rg" {
-  name     = var.rg_name
-  location = var.location
-  tags     = local.common_tags
+data "azurerm_resource_group" "workload" {
+  name = var.rg_name
 }
-
 resource "azurerm_virtual_network" "this" {
   for_each = local.virtual_networks
 
   name                = each.value.name
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.workload.location
+  resource_group_name = data.azurerm_resource_group.workload.name
   address_space       = each.value.address_space
 
   tags = local.common_tags
@@ -20,7 +17,7 @@ resource "azurerm_subnet" "this" {
   for_each = local.subnets
 
   name                 = each.value.name
-  resource_group_name  = azurerm_resource_group.rg.name
+  resource_group_name  = data.azurerm_resource_group.workload.name
   virtual_network_name = azurerm_virtual_network.this[each.value.virtual_network].name
   address_prefixes     = each.value.address_prefixes
 }
@@ -30,7 +27,7 @@ resource "azurerm_virtual_network_peering" "this" {
 
   name = "peer-${each.value.source_vnet}-to-${each.value.remote_vnet}"
 
-  resource_group_name  = azurerm_resource_group.rg.name
+  resource_group_name  = data.azurerm_resource_group.workload.name
   virtual_network_name = azurerm_virtual_network.this[each.value.source_vnet].name
 
   remote_virtual_network_id = azurerm_virtual_network.this[each.value.remote_vnet].id
