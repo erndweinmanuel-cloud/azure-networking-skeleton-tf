@@ -1,259 +1,286 @@
 # Azure Networking Skeleton with Terraform
 
-A reproducible Azure networking lab built with Terraform. The repository focuses on hub-and-spoke networking, private administration, traffic control, observability, remote state and a controlled deployment lifecycle.
+A reproducible Azure networking lab built with Terraform.
+
+The project demonstrates hub-and-spoke networking, private administration, traffic control, observability, remote state and a controlled GitHub Actions deployment lifecycle.
 
 > This is a portfolio and learning project, not a complete production landing zone.
 
-## Current status
+## Current Status
 
-The core infrastructure is implemented, validated and safely destroyable.
+The infrastructure has been successfully:
 
-- Root and bootstrap configurations pass `terraform validate`
-- Terraform state is stored in a separate Azure Blob backend
-- The workload was successfully destroyed while the remote backend remained intact
-- A clean rebuild was verified with: `54 to add, 0 to change, 0 to destroy`
-- CI/CD with GitHub Actions, Checkov and Azure OIDC is the next milestone
+- deployed through GitHub Actions
+- validated against the Terraform configuration
+- destroyed through GitHub Actions
+- rebuilt without manually recreating the workload resource group or its deployment permissions
+
+The complete Apply ? Validate ? Destroy lifecycle is operational.
 
 ## Architecture
 
 ```text
-                           Azure Bastion
-                                |
-                         +------v------+
-                         |   Hub VNet   |
-                         | 10.0.0.0/16  |
-                         |             |
-                         | Linux NVA   |
-                         | 10.0.1.4    |
-                         +---+-----+---+
-                             |     |
-                  Peering + UDR   Peering + UDR
-                             |     |
-              +--------------+     +--------------+
-              |                                   |
-       +------v---------+                  +------v----------+
-       | App Spoke      |                  | Data Spoke      |
-       | 10.10.0.0/16   |                  | 10.20.0.0/16    |
-       |                |                  |                 |
-       | vm-web01       | -- TCP/8080 -->  | vm-db01         |
-       | ASG: asg-app   |   via NVA        | ASG: asg-data   |
-       +----------------+                  +-----------------+
+                         Azure Bastion
+                               |
+                        AzureBastionSubnet
+                               |
+                         +-------------+
+                         |   Hub VNet  |
+                         | 10.0.0.0/16 |
+                         +-------------+
+                               |
+                         NVA 10.0.1.4
+                               |
+                 +-------------+-------------+
+                 |                           |
+          +--------------+            +---------------+
+          |  App Spoke   |            |  Data Spoke   |
+          | 10.10.0.0/16 |            | 10.20.0.0/16  |
+          +--------------+            +---------------+
+                 |                           |
+             vm-web01                    vm-db01
 ```
 
-### Network layout
+Traffic between the App and Data spokes is routed through the network virtual appliance using user-defined routes.
 
-| Component | Address space | Purpose |
-|---|---:|---|
-| Hub VNet | `10.0.0.0/16` | Shared services and transit |
-| AzureBastionSubnet | `10.0.0.0/26` | Central administrative access |
-| NVA subnet | `10.0.1.0/24` | Linux network virtual appliance |
-| App Spoke | `10.10.0.0/16` | Application workload |
-| App subnet | `10.10.1.0/24` | `vm-web01` |
-| Data Spoke | `10.20.0.0/16` | Data workload |
-| Data subnet | `10.20.1.0/24` | `vm-db01` |
-
-## Implemented capabilities
+## Implemented Components
 
 ### Networking
 
-- Hub-and-spoke topology with four VNet peerings
-- Linux NVA with NIC IP forwarding and OS-level forwarding
-- User-defined routes for App-to-Data and Data-to-App traffic through the NVA
-- Private workload VMs without public IP addresses
-- Central Azure Bastion in the hub
+- Hub-and-spoke topology
+- Hub VNet and two spoke VNets
+- Bidirectional VNet peerings
+- Dedicated Bastion and NVA subnets
+- Azure Bastion with no public IPs on workload VMs
+- Linux network virtual appliance with IP forwarding
+- User-defined routes through the NVA
+- Network Security Groups
+- Application Security Groups
+- Explicit SSH restrictions
+- App-to-Data traffic rule on TCP 8080
 
-### Security and identity
+### Compute and Identity
 
-- NSGs for App, Data and NVA subnets
-- ASG-based App-to-Data rule on TCP/8080
-- Explicit SSH allow rules from Azure Bastion
-- Explicit deny rules for SSH from all other sources
-- Microsoft Entra ID SSH extension on all Linux VMs
-- Explicit principal assignment for `Virtual Machine Administrator Login`
+- App Linux VM
+- Data Linux VM
+- NVA Linux VM
+- System-assigned managed identities
+- Microsoft Entra SSH login extension
+- Virtual Machine Administrator Login assignment
 
 ### Observability
 
-- Azure Network Watcher integration
-- Subnet Flow Logs v2 for App and Data
+- Azure Network Watcher
+- Subnet Flow Logs v2
 - Traffic Analytics
 - Log Analytics Workspace
-- Dedicated Storage Account for flow-log data
+- Dedicated Flow Log Storage Account
+- Retention configuration
 
-### Terraform state
+### Terraform
 
-The backend is managed separately under:
+- AzureRM provider 5.x
+- Remote state in Azure Blob Storage
+- Azure Blob state locking
+- Blob versioning
+- Blob and container soft delete
+- Separate bootstrap and workload states
+- Stable `for_each` keys
+- Structured locals and variables
+- Imported existing Azure resources
+- State migration without resource recreation
 
-```text
-bootstrap/terraform-backend/
-```
-
-It creates:
-
-- a dedicated resource group
-- an Azure Storage Account
-- a private Blob container
-- RBAC access using `Storage Blob Data Contributor`
-
-The workload can therefore be destroyed without deleting its remote state infrastructure.
-
-## Repository structure
+## Repository Structure
 
 ```text
 .
-├── bootstrap/terraform-backend/   # Separate backend bootstrap stack
-├── backend.tf                     # AzureRM backend declaration
-├── backend.hcl.example            # Example backend configuration
-├── network.tf                     # VNets, subnets and peerings
-├── routing.tf                     # Route tables, routes and associations
-├── nva.tf                         # Linux NVA configuration
-├── bastion.tf                     # Azure Bastion and public IP
-├── compute.tf                     # Workload VMs and NICs
-├── entra_id.tf                    # Entra SSH and VM login RBAC
-├── asg.tf                         # Application Security Groups
-├── nsg_app.tf                     # App NSG rules
-├── nsg_data.tf                    # Data NSG rules
-├── nsg_nva.tf                     # NVA NSG rules
-├── observability.tf               # Flow Logs and Log Analytics
-├── locals.tf                      # Shared maps and naming data
-├── variables.tf                   # Root input variables
-└── outputs.tf                     # Useful deployment outputs
++-- .github/
+�   +-- workflows/
+�       +-- terraform-ci.yml
+�       +-- terraform-apply.yml
+�       +-- terraform-destroy.yml
+�
++-- bootstrap/
+�   +-- terraform-backend/
+�       +-- main.tf
+�       +-- variables.tf
+�       +-- outputs.tf
+�       +-- versions.tf
+�
++-- workload/
+    +-- network.tf
+    +-- routing.tf
+    +-- compute.tf
+    +-- nva.tf
+    +-- bastion.tf
+    +-- nsg_app.tf
+    +-- nsg_data.tf
+    +-- nsg_nva.tf
+    +-- asg.tf
+    +-- entra_id.tf
+    +-- observability.tf
+    +-- variables.tf
+    +-- outputs.tf
 ```
 
-## Prerequisites
+## Separation of Lifecycles
 
-- Terraform compatible with the version constraint in `versions.tf`
-- Azure CLI
-- An Azure subscription
-- Permission to create the required Azure resources and role assignments
-- An SSH public key
+The project uses two Terraform states.
 
-## Usage
+### Bootstrap State
 
-### 1. Bootstrap the remote backend
+The persistent bootstrap stack manages:
 
-Create a local file from the example:
+- Terraform backend resource group
+- Terraform state storage account
+- private state container
+- workload resource group `rg-networking-tf`
+- GitHub Actions Contributor assignment
+- GitHub Actions RBAC Administrator assignment
 
-```powershell
-Copy-Item .\bootstrap\terraform-backend\terraform.tfvars.example `
-  .\bootstrap\terraform-backend\terraform.tfvars
-```
+These resources remain available between workload deployments.
 
-Set the Entra object ID that should receive backend access:
+### Workload State
 
-```hcl
-backend_operator_principal_id = "00000000-0000-0000-0000-000000000000"
-```
+The workload stack manages temporary lab resources:
 
-Then run:
+- VNets and subnets
+- peerings
+- route tables and routes
+- NVA
+- VMs and NICs
+- Bastion
+- NSGs and ASGs
+- Flow Logs
+- Log Analytics
+- Flow Log Storage
+- workload-specific role assignments
 
-```powershell
-Push-Location .\bootstrap\terraform-backend
-terraform init
-terraform plan
-terraform apply
-Pop-Location
-```
+A workload destroy removes the lab infrastructure while preserving the backend, workload resource group and deployment permissions.
 
-### 2. Configure the workload backend
+## GitHub Actions
 
-Create a local backend configuration from:
+Authentication between GitHub and Azure uses OpenID Connect.
 
-```text
-backend.hcl.example
-```
+No Azure client secret is stored in the repository.
 
-Initialize the root stack:
+### Continuous Integration
 
-```powershell
-terraform init -backend-config=backend.hcl
-```
+The CI workflow performs:
 
-### 3. Configure workload variables
-
-Create `terraform.tfvars` from `terraform.tfvars.example` and set at least:
-
-```hcl
-ssh_public_key      = "ssh-ed25519 AAAA..."
-vm_admin_principal_id = "00000000-0000-0000-0000-000000000000"
-```
-
-### 4. Validate and plan
-
-```powershell
-terraform fmt -check -recursive
-terraform validate
-terraform plan
-```
-
-### 5. Deploy or destroy the workload
-
-```powershell
-terraform apply
-terraform destroy
-```
-
-Run workload commands only from the repository root. Do not run `destroy` inside `bootstrap/terraform-backend` unless the backend itself should be removed.
-
-## Validation completed
-
-The following lifecycle has been tested:
-
-```text
-bootstrap backend
-      -> workload deploy
-      -> connectivity and logging validation
-      -> workload destroy
-      -> backend retained
-      -> clean rebuild plan
-```
-
-Latest verified rebuild plan:
-
-```text
-Plan: 54 to add, 0 to change, 0 to destroy.
-```
-
-## Security notes
-
-The current implementation already uses private containers, Entra ID/RBAC access, TLS 1.2 and private workload VMs. Further backend hardening for a production environment could include:
-
-- Blob versioning and soft delete
-- Storage firewall rules or a Private Endpoint
-- ZRS or GRS according to recovery requirements
-- Resource Lock or another explicit deletion-protection strategy
-
-Public network access must be designed together with the future GitHub Actions runner model. Disabling it without private runner connectivity would prevent hosted runners from reaching the backend.
-
-## Roadmap
-
-### v1.1 — Completed
-
-- Remote Terraform state
-- Hub-and-spoke topology
-- Central Bastion
-- Linux NVA and UDR routing
-- Entra ID SSH
-- NSG and ASG segmentation
-- Flow Logs and Log Analytics
-- Reproducible deploy/destroy lifecycle
-
-### v1.2 — Next
-
-- GitHub Actions CI
-- `terraform fmt` and `terraform validate`
+- `terraform fmt`
+- `terraform init`
+- `terraform validate`
+- `terraform plan`
 - Checkov security scanning
-- Azure authentication through OIDC
-- Terraform plan on pull requests
-- Manual apply with GitHub Environment approval
+- bootstrap validation
 
-### Possible later extensions
+### Manual Apply
 
-- NAT Gateway for deterministic outbound connectivity
-- Private Endpoint and Private DNS
-- Load Balancer with multiple App VMs
-- KQL dashboards and automated smoke tests
-- Azure Firewall as a managed replacement for the Linux NVA
+The Apply workflow:
+
+- runs only through `workflow_dispatch`
+- uses the protected `production` environment
+- authenticates with Azure through OIDC
+- creates a saved Terraform plan
+- applies the saved plan
+
+### Manual Destroy
+
+The Destroy workflow:
+
+- runs only through `workflow_dispatch`
+- requires the exact confirmation value `DESTROY`
+- uses the protected `production` environment
+- creates and displays a destroy plan
+- applies only the saved destroy plan
+- destroys only the workload stack
+
+## Verified Lifecycle
+
+The following lifecycle has been tested successfully:
+
+```text
+GitHub Apply
+    ?
+53 workload resources created
+    ?
+Terraform plan returns no changes
+    ?
+GitHub Destroy
+    ?
+Workload resources removed
+    ?
+Bootstrap, workload RG and permanent RBAC remain
+```
+
+## Recovery and State Operations
+
+During implementation, the project also covered realistic failure and recovery scenarios:
+
+- partial Azure deployment after an API polling failure
+- existing Flow Logs imported into Terraform state
+- workload resource group imported into Terraform
+- resource group ownership moved from workload state to bootstrap state
+- existing RBAC assignments imported into bootstrap state
+- state entries removed without deleting Azure resources
+- final idempotent plan with no infrastructure drift
+
+## Security Decisions
+
+- no public IPs on workload VMs
+- administrative access through Azure Bastion
+- Entra-based SSH authentication
+- GitHub OIDC instead of stored client secrets
+- backend access through Azure RBAC
+- workload permissions scoped to the workload resource group where possible
+- protected GitHub environment for Apply and Destroy
+- explicit confirmation before destruction
+- Checkov integrated into CI
+
+## Example Commands
+
+Initialize the workload backend:
+
+```bash
+terraform -chdir=workload init \
+  -backend-config="resource_group_name=rg-tfstate-networking" \
+  -backend-config="storage_account_name=<state-storage-account>" \
+  -backend-config="container_name=tfstate" \
+  -backend-config="key=networking.terraform.tfstate"
+```
+
+Validate the workload:
+
+```bash
+terraform -chdir=workload fmt -check
+terraform -chdir=workload validate
+terraform -chdir=workload plan
+```
+
+Deployments and destruction are normally performed through the manual GitHub Actions workflows.
+
+## Lessons Learned
+
+Key lessons from this project:
+
+- infrastructure and its deployment foundation should have different lifecycles
+- a destroyable workload must not remove the permissions required for its next deployment
+- Azure resources can exist even when provider polling reports a failure
+- Terraform imports are essential for recovering partially created infrastructure
+- stable `for_each` keys must be known before apply
+- local and CI variable values must be consistent to avoid misleading replacement plans
+- saved plans provide a controlled boundary between review and execution
+- idempotence is proven by a final `No changes` plan
+
+## Next Steps
+
+- add updated screenshots of CI, Apply and Destroy runs
+- document the GitHub OIDC trust configuration
+- review and further reduce monitoring-related RBAC scope
+- add workflow status badges
+- evaluate reusable Terraform modules where they provide clear value
 
 ## License
 
-See [LICENSE](LICENSE).
+This project is licensed under the MIT License.
