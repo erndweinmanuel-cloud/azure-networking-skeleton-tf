@@ -21,12 +21,15 @@ resource "random_string" "sa_suffix" {
 }
 
 resource "azurerm_storage_account" "flowlogs" {
+  # checkov:skip=CKV_AZURE_33:Queue service is not used by this storage account; it stores Network Watcher flow logs.
+  # checkov:skip=CKV_AZURE_59:Public endpoint is currently required for the planned GitHub-hosted CI/CD runner architecture.
+
   name                = "saflowlogs${random_string.sa_suffix.result}"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
 
   account_tier             = "Standard"
-  account_replication_type = "LRS"
+  account_replication_type = "ZRS"
   account_kind             = "StorageV2"
 
   min_tls_version                 = "TLS1_2"
@@ -51,8 +54,8 @@ resource "azurerm_network_watcher_flow_log" "this" {
   version = 2
 
   retention_policy {
-    enabled = false
-    days    = 0
+    enabled = true
+    days    = 91
   }
 
   traffic_analytics {
