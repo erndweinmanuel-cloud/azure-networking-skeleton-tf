@@ -229,6 +229,21 @@ Workload resources removed
 Bootstrap, workload RG and permanent RBAC remain
 ```
 
+## Verified GitHub Actions Lifecycle
+
+The complete infrastructure lifecycle was successfully tested through GitHub Actions.
+
+### Successful Terraform Apply
+
+![Successful Terraform Apply workflow](docs/github-apply-success.png)
+
+The Apply workflow authenticated to Azure through OIDC, initialized the remote backend, created a saved Terraform plan and deployed the workload successfully.
+
+### Successful Terraform Destroy
+
+![Successful Terraform Destroy workflow](docs/github-destroy-success.png)
+
+The Destroy workflow used the same remote backend, required the exact confirmation value `DESTROY` and removed the workload while preserving the bootstrap resources.
 ## Recovery and State Operations
 
 During implementation, the project also covered realistic failure and recovery scenarios:
@@ -299,4 +314,5 @@ Key lessons from this project:
 ## License
 
 This project is licensed under the MIT License.
+
 
