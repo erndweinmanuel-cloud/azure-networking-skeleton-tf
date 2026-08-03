@@ -30,8 +30,8 @@ resource "azurerm_route_table" "spoke" {
   for_each = local.spoke_route_tables
 
   name                = each.value.name
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.workload.location
+  resource_group_name = data.azurerm_resource_group.workload.name
 
   bgp_route_propagation_enabled = false
 
@@ -42,7 +42,7 @@ resource "azurerm_route" "spoke" {
   for_each = local.spoke_routes
 
   name                = each.value.name
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = data.azurerm_resource_group.workload.name
   route_table_name    = azurerm_route_table.spoke[each.value.route_table_key].name
 
   address_prefix         = each.value.address_prefix

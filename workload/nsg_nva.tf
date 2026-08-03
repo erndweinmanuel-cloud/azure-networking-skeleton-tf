@@ -1,7 +1,7 @@
 resource "azurerm_network_security_group" "nsg_nva" {
   name                = "nsg-nva"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.workload.location
+  resource_group_name = data.azurerm_resource_group.workload.name
 
   tags = local.common_tags
 }
@@ -20,7 +20,7 @@ resource "azurerm_network_security_rule" "allow_ssh_to_nva_from_bastion" {
   source_address_prefix      = azurerm_subnet.this["hub_bastion"].address_prefixes[0]
   destination_address_prefix = "10.0.1.4"
 
-  resource_group_name         = azurerm_resource_group.rg.name
+  resource_group_name         = data.azurerm_resource_group.workload.name
   network_security_group_name = azurerm_network_security_group.nsg_nva.name
 }
 
@@ -38,7 +38,7 @@ resource "azurerm_network_security_rule" "allow_app_to_data_via_nva" {
   source_address_prefix      = azurerm_subnet.this["app_workload"].address_prefixes[0]
   destination_address_prefix = azurerm_subnet.this["data_workload"].address_prefixes[0]
 
-  resource_group_name         = azurerm_resource_group.rg.name
+  resource_group_name         = data.azurerm_resource_group.workload.name
   network_security_group_name = azurerm_network_security_group.nsg_nva.name
 }
 
@@ -56,7 +56,7 @@ resource "azurerm_network_security_rule" "allow_data_to_app_via_nva" {
   source_address_prefix      = azurerm_subnet.this["data_workload"].address_prefixes[0]
   destination_address_prefix = azurerm_subnet.this["app_workload"].address_prefixes[0]
 
-  resource_group_name         = azurerm_resource_group.rg.name
+  resource_group_name         = data.azurerm_resource_group.workload.name
   network_security_group_name = azurerm_network_security_group.nsg_nva.name
 }
 
@@ -74,7 +74,7 @@ resource "azurerm_network_security_rule" "deny_ssh_to_nva_from_non_bastion" {
   source_address_prefix      = "*"
   destination_address_prefix = "10.0.1.4"
 
-  resource_group_name         = azurerm_resource_group.rg.name
+  resource_group_name         = data.azurerm_resource_group.workload.name
   network_security_group_name = azurerm_network_security_group.nsg_nva.name
 }
 

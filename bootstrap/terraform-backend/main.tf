@@ -60,3 +60,22 @@ resource "azurerm_role_assignment" "tfstate_blob_contributor" {
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = var.backend_operator_principal_id
 }
+resource "azurerm_resource_group" "workload" {
+  name     = var.workload_resource_group_name
+  location = var.location
+  tags     = var.workload_tags
+}
+
+resource "azurerm_role_assignment" "workload_contributor" {
+  scope                = azurerm_resource_group.workload.id
+  role_definition_name = "Contributor"
+  principal_id         = var.github_service_principal_object_id
+  principal_type       = "ServicePrincipal"
+}
+
+resource "azurerm_role_assignment" "workload_rbac_admin" {
+  scope                = azurerm_resource_group.workload.id
+  role_definition_name = "Role Based Access Control Administrator"
+  principal_id         = var.github_service_principal_object_id
+  principal_type       = "ServicePrincipal"
+}

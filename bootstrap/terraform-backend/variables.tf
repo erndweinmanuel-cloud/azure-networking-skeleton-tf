@@ -52,3 +52,31 @@ variable "backend_operator_principal_id" {
     error_message = "backend_operator_principal_id must be a valid Microsoft Entra object ID (UUID)."
   }
 }
+
+variable "workload_resource_group_name" {
+  type        = string
+  description = "Name of the persistent resource group containing the networking workload."
+  default     = "rg-networking-tf"
+}
+
+variable "workload_tags" {
+  type        = map(string)
+  description = "Tags applied to the persistent workload resource group."
+
+  default = {
+    architecture = "hub-spoke"
+    environment  = "lab"
+    managed_by   = "terraform"
+    project      = "azure-networking-skeleton"
+  }
+}
+
+variable "github_service_principal_object_id" {
+  type        = string
+  description = "Microsoft Entra object ID of the GitHub Actions service principal."
+
+  validation {
+    condition     = can(regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", var.github_service_principal_object_id))
+    error_message = "github_service_principal_object_id must be a valid Microsoft Entra object ID."
+  }
+}

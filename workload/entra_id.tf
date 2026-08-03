@@ -25,7 +25,7 @@ resource "azurerm_virtual_machine_extension" "entra_ssh_login" {
 }
 
 resource "azurerm_role_assignment" "vm_administrator_login" {
-  scope                = azurerm_resource_group.rg.id
+  scope                = data.azurerm_resource_group.workload.id
   role_definition_name = "Virtual Machine Administrator Login"
   principal_id         = var.vm_admin_principal_id
 }

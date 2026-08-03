@@ -2,8 +2,8 @@ resource "azurerm_application_security_group" "this" {
   for_each = local.application_security_groups
 
   name                = each.value.name
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.workload.location
+  resource_group_name = data.azurerm_resource_group.workload.name
 
   tags = local.common_tags
 }
