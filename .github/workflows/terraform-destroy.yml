@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       confirmation:
-        description: 'Type DESTROY to confirm'
+        description: "Type DESTROY to confirm"
         required: true
         type: string
 
@@ -58,7 +58,12 @@ jobs:
 
       - name: Terraform init
         working-directory: workload
-        run: terraform init -input=false
+        run: |
+          terraform init -input=false \
+            -backend-config="resource_group_name=rg-tfstate-networking" \
+            -backend-config="storage_account_name=sttfnetworkingfws4kc" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=networking.terraform.tfstate"
 
       - name: Terraform validate
         working-directory: workload
