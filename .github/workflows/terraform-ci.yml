@@ -21,6 +21,13 @@ permissions:
   contents: read
   id-token: write
 
+env:
+  ARM_USE_OIDC: true
+  ARM_USE_AZUREAD: true
+  ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
 jobs:
   terraform-checks:
     name: Terraform checks
@@ -52,13 +59,27 @@ jobs:
       - name: Terraform format check
         run: terraform fmt -check -recursive
 
-      - name: Initialize workload without backend
+      - name: Initialize workload with remote backend
         working-directory: workload
-        run: terraform init -backend=false
+        run: |
+          terraform init \
+            -reconfigure \
+            -backend-config="resource_group_name=rg-tfstate-networking" \
+            -backend-config="storage_account_name=sttfnetworkingfws4kc" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=networking.terraform.tfstate"
 
       - name: Validate workload
         working-directory: workload
         run: terraform validate
+
+      - name: Terraform plan
+        working-directory: workload
+        run: |
+          terraform plan \
+            -input=false \
+            -lock-timeout=5m \
+            -out=tfplan
 
       - name: Initialize backend bootstrap without backend
         working-directory: bootstrap/terraform-backend
