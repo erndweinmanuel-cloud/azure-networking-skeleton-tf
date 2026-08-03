@@ -3,8 +3,8 @@ data "azurerm_client_config" "current" {}
 locals {
   entra_login_vms = merge(
     {
-      for key, vm in azurerm_linux_virtual_machine.workload :
-      key => vm.id
+      for key in keys(local.workload_vms) :
+      key => azurerm_linux_virtual_machine.workload[key].id
     },
     {
       nva = azurerm_linux_virtual_machine.vm_nva.id
