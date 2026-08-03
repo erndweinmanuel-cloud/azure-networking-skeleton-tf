@@ -11,6 +11,11 @@ resource "azurerm_resource_group" "tfstate" {
 }
 
 resource "azurerm_storage_account" "tfstate" {
+  # checkov:skip=CKV2_AZURE_33:GitHub-hosted runners require the public storage endpoint because no private runner network is available.
+  # checkov:skip=CKV_AZURE_33:Queue Storage is not used; this account stores Terraform state in Blob Storage only.
+  # checkov:skip=CKV_AZURE_59:The public endpoint is required for GitHub-hosted runners; anonymous access is disabled and authentication uses Entra ID with RBAC.
+  # checkov:skip=CKV_AZURE_206:LRS is retained intentionally for this small Terraform backend; blob versioning and soft delete provide recovery protection.
+
   name = "${var.storage_account_prefix}${random_string.storage_suffix.result}"
 
   resource_group_name = azurerm_resource_group.tfstate.name
@@ -24,6 +29,18 @@ resource "azurerm_storage_account" "tfstate" {
   public_network_access_enabled   = true
   allow_nested_items_to_be_public = false
   shared_access_key_enabled       = false
+
+  blob_properties {
+    versioning_enabled = true
+
+    delete_retention_policy {
+      days = 14
+    }
+
+    container_delete_retention_policy {
+      days = 14
+    }
+  }
 
   tags = var.tags
 }
