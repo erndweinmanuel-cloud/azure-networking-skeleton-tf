@@ -11,6 +11,8 @@ resource "azurerm_resource_group" "tfstate" {
 }
 
 resource "azurerm_storage_account" "tfstate" {
+  # checkov:skip=CKV2_AZURE_21:Blob read diagnostics require a separate logging destination and are outside the current backend scope.
+  # checkov:skip=CKV2_AZURE_1:Microsoft-managed encryption is sufficient for this project; CMK would require additional Key Vault and identity infrastructure.
   # checkov:skip=CKV2_AZURE_33:GitHub-hosted runners require the public storage endpoint because no private runner network is available.
   # checkov:skip=CKV_AZURE_33:Queue Storage is not used; this account stores Terraform state in Blob Storage only.
   # checkov:skip=CKV_AZURE_59:The public endpoint is required for GitHub-hosted runners; anonymous access is disabled and authentication uses Entra ID with RBAC.
