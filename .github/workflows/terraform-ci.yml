@@ -1,0 +1,55 @@
+name: Terraform CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "workload/**"
+      - "bootstrap/terraform-backend/**"
+      - ".github/workflows/terraform-ci.yml"
+
+  push:
+    branches:
+      - feature/terraform-cicd
+    paths:
+      - "workload/**"
+      - "bootstrap/terraform-backend/**"
+      - ".github/workflows/terraform-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  terraform-checks:
+    name: Terraform checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.14.2
+          terraform_wrapper: false
+
+      - name: Terraform format check
+        run: terraform fmt -check -recursive
+
+      - name: Initialize workload without backend
+        working-directory: workload
+        run: terraform init -backend=false
+
+      - name: Validate workload
+        working-directory: workload
+        run: terraform validate
+
+      - name: Initialize backend bootstrap without backend
+        working-directory: bootstrap/terraform-backend
+        run: terraform init -backend=false
+
+      - name: Validate backend bootstrap
+        working-directory: bootstrap/terraform-backend
+        run: terraform validate
