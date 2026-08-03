@@ -53,3 +53,11 @@ jobs:
       - name: Validate backend bootstrap
         working-directory: bootstrap/terraform-backend
         run: terraform validate
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: terraform
+          quiet: true
+          soft_fail: false
