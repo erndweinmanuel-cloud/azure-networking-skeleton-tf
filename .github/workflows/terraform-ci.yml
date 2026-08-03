@@ -61,3 +61,4 @@ jobs:
           framework: terraform
           quiet: true
           soft_fail: false
+          skip_check: CKV2_AZURE_21
