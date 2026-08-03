@@ -6,6 +6,21 @@ The project demonstrates hub-and-spoke networking, private administration, traff
 
 > This is a portfolio and learning project, not a complete production landing zone.
 
+## Architecture
+
+![Azure Hub-Spoke architecture deployed with Terraform](docs/architecture.png)
+
+The architecture separates the persistent Terraform bootstrap foundation from the destroyable Azure networking workload.
+
+### Architecture Highlights
+
+- Hub-and-spoke network with dedicated App and Data spokes
+- Linux NVA and user-defined routes for controlled inter-spoke traffic
+- Azure Bastion for private administrative access
+- No public IP addresses on workload virtual machines
+- Subnet Flow Logs v2 with Traffic Analytics and Log Analytics
+- Separate Terraform states for the persistent bootstrap and temporary workload
+- GitHub Actions authentication through OIDC without a stored Azure client secret
 ## Current Status
 
 The infrastructure has been successfully:
@@ -284,3 +299,4 @@ Key lessons from this project:
 ## License
 
 This project is licensed under the MIT License.
+
